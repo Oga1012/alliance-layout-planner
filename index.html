@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Alliance Layout Planner</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header>
+
+    <div class="header-top">
+
+        <div>
+            <h1>Alliance Layout Planner</h1>
+            <p>同盟レイアウト作成ツール</p>
+        </div>
+
+        <div id="status">
+            座標：X -- / Y --
+        </div>
+
+    </div>
+
+
+    <div id="toolbar">
+
+        <!-- 配置ツール -->
+        <div class="tool-group">
+
+            <span class="group-title">
+                配置
+            </span>
+
+            <button
+                class="tool-button active"
+                data-tool="hq"
+            >
+                同盟本部
+            </button>
+
+            <button
+                class="tool-button"
+                data-tool="flag"
+            >
+                旗
+            </button>
+
+            <button
+                class="tool-button"
+                data-tool="bear1"
+            >
+                熊罠1
+            </button>
+
+            <button
+                class="tool-button"
+                data-tool="bear2"
+            >
+                熊罠2
+            </button>
+
+            <button
+                id="player-tool-button"
+                class="tool-button"
+                data-tool="player"
+                disabled
+            >
+                プレイヤー
+            </button>
+
+            <button
+                class="tool-button fixed-tool-button"
+                data-tool="fixed-coal"
+            >
+                石炭工場
+            </button>
+
+            <button
+                class="tool-button fixed-tool-button"
+                data-tool="fixed-farm"
+            >
+                牧場
+            </button>
+
+            <button
+                class="tool-button fixed-tool-button"
+                data-tool="fixed-lumber"
+            >
+                製材所
+            </button>
+
+            <button
+                class="tool-button fixed-tool-button"
+                data-tool="fixed-iron"
+            >
+                鉄鉱場
+            </button>
+
+        </div>
+
+
+        <!-- 操作ツール -->
+        <div class="tool-group">
+
+            <span class="group-title">
+                操作
+            </span>
+
+            <button
+                class="tool-button"
+                data-tool="pan"
+            >
+                盤面移動
+            </button>
+
+            <button
+                type="button"
+                id="zoom-out"
+            >
+                −
+            </button>
+
+            <span id="zoom-display">
+                100%
+            </span>
+
+            <button
+                type="button"
+                id="zoom-in"
+            >
+                ＋
+            </button>
+
+            <button
+                type="button"
+                id="reset-view"
+            >
+                表示位置を戻す
+            </button>
+
+            <button
+                type="button"
+                id="clear-map"
+                class="danger-button"
+            >
+                全消去
+            </button>
+
+        </div>
+
+
+        <!-- 表示レイヤー -->
+        <div class="tool-group layer-group">
+
+            <span class="group-title">
+                表示
+            </span>
+
+            <label>
+                <input
+                    type="checkbox"
+                    id="layer-territory"
+                    checked
+                >
+                領地
+            </label>
+
+            <label>
+                <input
+                    type="checkbox"
+                    id="layer-hq"
+                    checked
+                >
+                本部
+            </label>
+
+            <label>
+                <input
+                    type="checkbox"
+                    id="layer-flags"
+                    checked
+                >
+                旗
+            </label>
+
+            <label>
+                <input
+                    type="checkbox"
+                    id="layer-connections"
+                >
+                接続線
+            </label>
+
+            <label>
+                <input
+                    type="checkbox"
+                    id="layer-players"
+                    checked
+                >
+                プレイヤー
+            </label>
+
+            <label>
+                <input
+                    type="checkbox"
+                    id="layer-bears"
+                    checked
+                >
+                熊罠
+            </label>
+
+            <label>
+                <input
+                    type="checkbox"
+                    id="layer-fixed"
+                    checked
+                >
+                固定施設
+            </label>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<main>
+
+    <div id="instruction">
+        「同盟本部」を選び、配置したいマスをクリックしてください。
+        クリックしたマスが本部の左上になります。
+    </div>
+
+
+    <div id="workspace">
+
+        <!-- 左側サイドパネル -->
+        <aside id="side-panel">
+
+            <!-- レイアウト管理欄 -->
+            <section id="layout-panel">
+
+                <h2>
+                    レイアウト管理
+                </h2>
+
+
+                <div id="current-layout-area">
+
+                    <span class="layout-label">
+                        現在のレイアウト
+                    </span>
+
+                    <strong id="current-layout-name">
+                        案A
+                    </strong>
+
+                </div>
+
+
+                <div class="layout-select-area">
+
+                    <label for="layout-select">
+                        レイアウト選択
+                    </label>
+
+                    <select id="layout-select">
+                        <option value="">
+                            案A
+                        </option>
+                    </select>
+
+                </div>
+
+
+                <div class="layout-button-area">
+
+                    <button
+                        type="button"
+                        id="new-layout"
+                    >
+                        新規
+                    </button>
+
+                    <button
+                        type="button"
+                        id="duplicate-layout"
+                    >
+                        複製
+                    </button>
+
+                    <button
+                        type="button"
+                        id="rename-layout"
+                    >
+                        名前変更
+                    </button>
+
+                    <button
+                        type="button"
+                        id="delete-layout"
+                        class="danger-button"
+                    >
+                        削除
+                    </button>
+
+                    <button
+                        type="button"
+                        id="export-json"
+                    >
+                        JSON保存
+                    </button>
+
+                    <button
+                        type="button"
+                        id="import-json"
+>
+                        JSON読込
+                    </button>
+
+                    <input
+                        type="file"
+                        id="import-json-file"
+                        accept=".json"
+                        hidden
+                    >
+
+                </div>
+
+
+                <p id="layout-message">
+                    レイアウトは自動的に「案A」から開始します。
+                </p>
+
+            </section>
+
+
+            <!-- プレイヤー管理欄 -->
+            <section id="bear-settings-panel">
+
+                <h2>
+                    熊罠設定
+                </h2>
+
+                <div class="bear-time-row">
+                    <label for="bear1-start-time">
+                        熊罠1 開始
+                    </label>
+
+                    <input
+                        type="time"
+                        id="bear1-start-time"
+                        value="12:00"
+                    >
+
+                    <span>UTC</span>
+                </div>
+
+                <div class="bear-time-row">
+                    <label for="bear2-start-time">
+                        熊罠2 開始
+                    </label>
+
+                    <input
+                        type="time"
+                        id="bear2-start-time"
+                        value="13:00"
+                    >
+
+                    <span>UTC</span>
+                </div>
+
+                <div class="hq-direction-row">
+                    <label for="hq-direction">
+                        本部の方向
+                    </label>
+
+                    <select id="hq-direction">
+                        <option value="north">
+                            北
+                        </option>
+                        <option value="south">
+                            南
+                        </option>
+                        <option value="east" selected>
+                            東
+                        </option>
+                        <option value="west">
+                            西
+                        </option>
+                    </select>
+                </div>
+
+                <div id="bear-group-summary">
+                    <div
+                        class="bear-summary-card"
+                        id="bear1-summary"
+                    ></div>
+
+                    <div
+                        class="bear-summary-card"
+                        id="bear2-summary"
+                    ></div>
+
+                    <div
+                        class="bear-summary-card unassigned"
+                        id="unassigned-summary"
+                    ></div>
+                </div>
+
+                <button
+                    type="button"
+                    id="auto-generate-layout"
+                >
+                    本部・旗を自動配置
+                </button>
+
+                <p id="bear-time-message">
+                    時刻はレイアウトごとに保存されます。
+                </p>
+
+            </section>
+
+            <section id="player-panel">
+
+                <h2>
+                    プレイヤー管理
+                </h2>
+
+
+                <div class="csv-import-area">
+
+                    <label
+                        for="player-csv-file"
+                        class="csv-label"
+                    >
+                        プレイヤーCSV
+                    </label>
+
+                    <input
+                        type="file"
+                        id="player-csv-file"
+                        accept=".csv,text/csv"
+                    >
+
+                    <button
+                        type="button"
+                        id="import-player-csv"
+                    >
+                        CSVを読み込む
+                    </button>
+
+                    <p id="csv-import-message">
+                        CSVを選択してください。
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="auto-place-players"
+                >
+                    プレイヤーを自動配置
+                </button>
+
+                <p id="auto-player-message">
+                    優先度と希望時間を使って配置します。
+                </p>
+
+                <div
+                    class="player-rank-legend"
+                    aria-label="プレイヤー優先度の色"
+                >
+                    <span class="player-rank-ss">SS</span>
+                    <span class="player-rank-s">S</span>
+                    <span class="player-rank-a">A</span>
+                    <span class="player-rank-b">B</span>
+                    <span class="player-rank-c">C</span>
+                    <span class="player-rank-d">D</span>
+                    <span class="player-rank-unset">未設定</span>
+                </div>
+
+
+                <div id="player-count-area">
+
+                    <div class="player-count-item">
+
+                        <span>
+                            登録人数
+                        </span>
+
+                        <strong id="total-player-count">
+                            0
+                        </strong>
+
+                    </div>
+
+                    <div class="player-count-item">
+
+                        <span>
+                            配置済み
+                        </span>
+
+                        <strong id="placed-player-count">
+                            0
+                        </strong>
+
+                    </div>
+
+                    <div class="player-count-item">
+
+                        <span>
+                            未配置
+                        </span>
+
+                        <strong id="unplaced-player-count">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div id="player-selection-area">
+
+                    <h3>
+                        プレイヤー一覧
+                    </h3>
+
+                    <p id="selected-player-display">
+                        選択中：なし
+                    </p>
+
+                    <div id="player-list">
+
+                        <p class="empty-player-message">
+                            CSVを読み込むと、
+                            ここにプレイヤー名が表示されます。
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </aside>
+
+
+        <!-- マップ -->
+        <div id="map-container">
+            <div id="grid"></div>
+        </div>
+
+    </div>
+
+</main>
+
+
+<script src="js/state.js"></script>
+<script src="js/map.js"></script>
+
+<script src="js/toolbar-ui.js"></script>
+<script src="js/bear-ui.js"></script>
+<script src="js/player-ui.js"></script>
+<script src="js/csv.js"></script>
+<script src="js/layout-ui.js"></script>
+<script src="js/save-load.js"></script>
+
+<script src="js/app.js"></script>
+
+</body>
+
+</html>
