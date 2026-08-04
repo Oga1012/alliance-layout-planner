@@ -28,6 +28,11 @@ function renderPlayerList() {
             emptyMessage
         );
 
+        updatePlayerFilterCount(
+            0,
+            0
+        );
+
         updateSelectedPlayerDisplay();
 
         return;
@@ -43,11 +48,70 @@ function renderPlayerList() {
         "": 6
     };
 
+    const filters =
+        getPlayerFilters();
+
     const sortedPlayers =
         app.state.players
             .slice()
+            .filter(
+                function (player) {
+                    const normalizedName =
+                        String(player.name || "")
+                            .toLocaleLowerCase("ja");
+
+                    if (
+                        filters.searchText &&
+                        !normalizedName.includes(
+                            filters.searchText
+                        )
+                    ) {
+                        return false;
+                    }
+
+                    if (
+                        filters.status === "placed" &&
+                        !player.isPlaced
+                    ) {
+                        return false;
+                    }
+
+                    if (
+                        filters.status === "unplaced" &&
+                        player.isPlaced
+                    ) {
+                        return false;
+                    }
+
+                    if (
+                        filters.priority === "unset" &&
+                        player.priority
+                    ) {
+                        return false;
+                    }
+
+                    if (
+                        filters.priority !== "all" &&
+                        filters.priority !== "unset" &&
+                        player.priority !== filters.priority
+                    ) {
+                        return false;
+                    }
+
+                    return true;
+                }
+            )
             .sort(
                 function (first, second) {
+                    if (
+                        first.isPlaced !==
+                        second.isPlaced
+                    ) {
+                        return first.isPlaced
+                            ? 1
+                            : -1;
+                    }
+
                     return (
                         (
                             priorityOrder[
@@ -62,6 +126,30 @@ function renderPlayerList() {
                     );
                 }
             );
+
+    updatePlayerFilterCount(
+        sortedPlayers.length,
+        app.state.players.length
+    );
+
+    if (sortedPlayers.length === 0) {
+        const noResultsMessage =
+            document.createElement("p");
+
+        noResultsMessage.className =
+            "empty-player-message";
+
+        noResultsMessage.textContent =
+            "条件に合うプレイヤーはいません。";
+
+        playerListElement.appendChild(
+            noResultsMessage
+        );
+
+        updateSelectedPlayerDisplay();
+
+        return;
+    }
 
     sortedPlayers.forEach(
         function (player) {
@@ -323,6 +411,95 @@ function updateSelectedPlayerDisplay() {
 
 
 // =======================================
+// プレイヤー一覧の絞り込み条件
+// =======================================
+
+function getPlayerFilters() {
+    const searchInput =
+        document.getElementById(
+            "player-search-input"
+        );
+
+    const statusSelect =
+        document.getElementById(
+            "player-status-filter"
+        );
+
+    const prioritySelect =
+        document.getElementById(
+            "player-priority-filter"
+        );
+
+    return {
+        searchText:
+            searchInput
+                ? searchInput.value
+                    .trim()
+                    .toLocaleLowerCase("ja")
+                : "",
+        status:
+            statusSelect
+                ? statusSelect.value
+                : "unplaced",
+        priority:
+            prioritySelect
+                ? prioritySelect.value
+                : "all"
+    };
+}
+
+
+function updatePlayerFilterCount(
+    visibleCount,
+    totalCount
+) {
+    const countElement =
+        document.getElementById(
+            "player-filter-count"
+        );
+
+    if (!countElement) {
+        return;
+    }
+
+    countElement.textContent =
+        `表示：${visibleCount} / ${totalCount}人`;
+}
+
+
+function resetPlayerFilters() {
+    const searchInput =
+        document.getElementById(
+            "player-search-input"
+        );
+
+    const statusSelect =
+        document.getElementById(
+            "player-status-filter"
+        );
+
+    const prioritySelect =
+        document.getElementById(
+            "player-priority-filter"
+        );
+
+    if (searchInput) {
+        searchInput.value = "";
+    }
+
+    if (statusSelect) {
+        statusSelect.value = "all";
+    }
+
+    if (prioritySelect) {
+        prioritySelect.value = "all";
+    }
+
+    renderPlayerList();
+}
+
+
+// =======================================
 // プレイヤーツールの有効・無効
 // =======================================
 
@@ -394,6 +571,55 @@ if (autoPlacePlayersButton) {
                 autoPlacePlayers();
             }
         }
+    );
+}
+
+
+const playerSearchInput =
+    document.getElementById(
+        "player-search-input"
+    );
+
+const playerStatusFilter =
+    document.getElementById(
+        "player-status-filter"
+    );
+
+const playerPriorityFilter =
+    document.getElementById(
+        "player-priority-filter"
+    );
+
+const resetPlayerFiltersButton =
+    document.getElementById(
+        "reset-player-filters"
+    );
+
+if (playerSearchInput) {
+    playerSearchInput.addEventListener(
+        "input",
+        renderPlayerList
+    );
+}
+
+if (playerStatusFilter) {
+    playerStatusFilter.addEventListener(
+        "change",
+        renderPlayerList
+    );
+}
+
+if (playerPriorityFilter) {
+    playerPriorityFilter.addEventListener(
+        "change",
+        renderPlayerList
+    );
+}
+
+if (resetPlayerFiltersButton) {
+    resetPlayerFiltersButton.addEventListener(
+        "click",
+        resetPlayerFilters
     );
 }
 
