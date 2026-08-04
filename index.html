@@ -543,6 +543,57 @@
                         選択中：なし
                     </p>
 
+                    <div id="player-filter-controls">
+
+                        <label
+                            for="player-search-input"
+                            class="player-filter-search"
+                        >
+                            <span>名前検索</span>
+                            <input
+                                type="search"
+                                id="player-search-input"
+                                placeholder="名前の一部を入力"
+                                autocomplete="off"
+                            >
+                        </label>
+
+                        <label>
+                            <span>配置状態</span>
+                            <select id="player-status-filter">
+                                <option value="unplaced" selected>未配置だけ</option>
+                                <option value="all">すべて</option>
+                                <option value="placed">配置済みだけ</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            <span>優先度</span>
+                            <select id="player-priority-filter">
+                                <option value="all">すべて</option>
+                                <option value="SS">SS</option>
+                                <option value="S">S</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                                <option value="unset">未設定</option>
+                            </select>
+                        </label>
+
+                        <button
+                            type="button"
+                            id="reset-player-filters"
+                        >
+                            絞り込み解除
+                        </button>
+
+                        <p id="player-filter-count">
+                            表示：0 / 0人
+                        </p>
+
+                    </div>
+
                     <div id="player-list">
 
                         <p class="empty-player-message">
