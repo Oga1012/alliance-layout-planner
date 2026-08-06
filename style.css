@@ -130,11 +130,74 @@ button:disabled {
     background: #0369a1;
 }
 
+/* サイドパネルの折り畳み */
+
+#layout-panel,
+#bear-settings-panel,
+#player-panel {
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+#layout-panel:first-child {
+    margin-top: 0;
+}
+
+#layout-panel h2,
+#bear-settings-panel h2,
+#player-panel h2 {
+    margin: 0;
+}
+
+.panel-toggle {
+    width: 100%;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 10px;
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+    color: #172033;
+    font-size: 16px;
+    font-weight: 800;
+    text-align: left;
+}
+
+.panel-toggle:hover:not(:disabled) {
+    background: #e2e8f0;
+}
+
+.panel-toggle-icon {
+    min-width: 24px;
+    color: #0369a1;
+    font-size: 20px;
+    line-height: 1;
+    text-align: center;
+}
+
+.panel-content {
+    padding-top: 10px;
+}
+
+.panel-content[hidden] {
+    display: none;
+}
+
 @media (pointer: coarse) {
     .history-button {
         min-height: 44px;
         padding: 9px 13px;
         font-size: 14px;
+    }
+
+    .panel-toggle {
+        min-height: 48px;
+        padding: 10px 12px;
     }
 }
 

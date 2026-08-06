@@ -11,7 +11,7 @@
 
     <title>Alliance Layout Planner</title>
 
-    <link rel="stylesheet" href="style.css?v=20260806-mobile">
+    <link rel="stylesheet" href="style.css?v=20260806-collapse">
 </head>
 
 <body>
@@ -272,9 +272,21 @@
             <section id="layout-panel">
 
                 <h2>
-                    レイアウト管理
+                    <button
+                        type="button"
+                        class="panel-toggle"
+                        aria-expanded="true"
+                        aria-controls="layout-panel-content"
+                    >
+                        <span>レイアウト管理</span>
+                        <span class="panel-toggle-icon" aria-hidden="true">⌃</span>
+                    </button>
                 </h2>
 
+                <div
+                    id="layout-panel-content"
+                    class="panel-content"
+                >
 
                 <div id="current-layout-area">
 
@@ -363,6 +375,8 @@
                     レイアウトは自動的に「案A」から開始します。
                 </p>
 
+                </div>
+
             </section>
 
 
@@ -370,8 +384,21 @@
             <section id="bear-settings-panel">
 
                 <h2>
-                    熊罠設定
+                    <button
+                        type="button"
+                        class="panel-toggle"
+                        aria-expanded="true"
+                        aria-controls="bear-settings-content"
+                    >
+                        <span>熊罠設定</span>
+                        <span class="panel-toggle-icon" aria-hidden="true">⌃</span>
+                    </button>
                 </h2>
+
+                <div
+                    id="bear-settings-content"
+                    class="panel-content"
+                >
 
                 <div class="bear-time-row">
                     <label for="bear1-start-time">
@@ -450,14 +477,28 @@
                     時刻はレイアウトごとに保存されます。
                 </p>
 
+                </div>
+
             </section>
 
             <section id="player-panel">
 
                 <h2>
-                    プレイヤー管理
+                    <button
+                        type="button"
+                        class="panel-toggle"
+                        aria-expanded="true"
+                        aria-controls="player-panel-content"
+                    >
+                        <span>プレイヤー管理</span>
+                        <span class="panel-toggle-icon" aria-hidden="true">⌃</span>
+                    </button>
                 </h2>
 
+                <div
+                    id="player-panel-content"
+                    class="panel-content"
+                >
 
                 <div class="csv-import-area">
 
@@ -625,6 +666,8 @@
 
                 </div>
 
+                </div>
+
             </section>
 
         </aside>
@@ -644,6 +687,7 @@
 <script src="js/map.js?v=20260806-mobile"></script>
 
 <script src="js/toolbar-ui.js"></script>
+<script src="js/collapse-ui.js?v=20260806-collapse"></script>
 <script src="js/bear-ui.js"></script>
 <script src="js/player-ui.js"></script>
 <script src="js/csv.js"></script>
