@@ -41,6 +41,40 @@ console.log(
 );
 
 // =======================================
+// 戻す・やり直すボタン
+// =======================================
+
+const undoButton =
+    document.getElementById(
+        "undo-button"
+    );
+
+const redoButton =
+    document.getElementById(
+        "redo-button"
+    );
+
+if (undoButton) {
+    undoButton.addEventListener(
+        "click",
+        function () {
+            window.AllianceApp.undo();
+        }
+    );
+}
+
+if (redoButton) {
+    redoButton.addEventListener(
+        "click",
+        function () {
+            window.AllianceApp.redo();
+        }
+    );
+}
+
+window.AllianceApp.refreshHistoryButtons();
+
+// =======================================
 // Ctrl+Zで戻す・Ctrl+Yでやり直す
 // =======================================
 

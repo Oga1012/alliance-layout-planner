@@ -798,6 +798,34 @@ window.AllianceApp.createHistorySnapshot =
 // 現在の配置状態を履歴へ保存する
 // =======================================
 
+window.AllianceApp.refreshHistoryButtons =
+    function () {
+        const app =
+            window.AllianceApp;
+
+        const undoButton =
+            document.getElementById(
+                "undo-button"
+            );
+
+        const redoButton =
+            document.getElementById(
+                "redo-button"
+            );
+
+        if (undoButton) {
+            undoButton.disabled =
+                !app.state.history ||
+                app.state.history.length === 0;
+        }
+
+        if (redoButton) {
+            redoButton.disabled =
+                !app.state.redoHistory ||
+                app.state.redoHistory.length === 0;
+        }
+    };
+
 window.AllianceApp.saveHistory =
     function () {
         const app =
@@ -817,6 +845,8 @@ window.AllianceApp.saveHistory =
         }
 
         app.state.redoHistory = [];
+
+        app.refreshHistoryButtons();
     };
 
 // =======================================
@@ -915,6 +945,7 @@ window.AllianceApp.undo =
             !app.state.history ||
             app.state.history.length === 0
         ) {
+            app.refreshHistoryButtons();
             return false;
         }
 
@@ -929,6 +960,7 @@ window.AllianceApp.undo =
         ) {
             app.state.history = [];
             app.state.redoHistory = [];
+            app.refreshHistoryButtons();
             return false;
         }
 
@@ -947,9 +979,14 @@ window.AllianceApp.undo =
             app.state.redoHistory.shift();
         }
 
-        return app.restoreHistorySnapshot(
+        const restored =
+            app.restoreHistorySnapshot(
             snapshot
         );
+
+        app.refreshHistoryButtons();
+
+        return restored;
     };
 
 // =======================================
@@ -965,6 +1002,7 @@ window.AllianceApp.redo =
             !app.state.redoHistory ||
             app.state.redoHistory.length === 0
         ) {
+            app.refreshHistoryButtons();
             return false;
         }
 
@@ -978,6 +1016,7 @@ window.AllianceApp.redo =
             app.state.currentLayoutId
         ) {
             app.state.redoHistory = [];
+            app.refreshHistoryButtons();
             return false;
         }
 
@@ -996,9 +1035,14 @@ window.AllianceApp.redo =
             app.state.history.shift();
         }
 
-        return app.restoreHistorySnapshot(
+        const restored =
+            app.restoreHistorySnapshot(
             snapshot
         );
+
+        app.refreshHistoryButtons();
+
+        return restored;
     };
 
 // =======================================
