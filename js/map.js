@@ -10,6 +10,30 @@ const GRID_SIZE = 100;
 
 let suppressNextMapClick = false;
 
+const MOBILE_LONG_PRESS_DELAY = 550;
+const MOBILE_LONG_PRESS_MOVE_LIMIT = 12;
+
+let mobileLongPressTimer = null;
+let suppressContextMenuUntil = 0;
+
+const mobileTouchState = {
+    startClientX: null,
+    startClientY: null,
+    cellX: null,
+    cellY: null,
+    longPressTriggered: false
+};
+
+const mobileMoveState = {
+    active: false,
+    type: null,
+    id: null,
+    grabOffsetX: 0,
+    grabOffsetY: 0
+};
+
+let mobileActionTarget = null;
+
 const flagDragState = {
     active: false,
     flagId: null,
@@ -103,9 +127,70 @@ function createGrid() {
             );
 
             cell.addEventListener(
+                "touchstart",
+                function (event) {
+                    handleMapTouchStart(
+                        event,
+                        x,
+                        y
+                    );
+                },
+                {
+                    passive: true
+                }
+            );
+
+            cell.addEventListener(
+                "touchmove",
+                handleMapTouchMove,
+                {
+                    passive: true
+                }
+            );
+
+            cell.addEventListener(
+                "touchend",
+                handleMapTouchEnd,
+                {
+                    passive: false
+                }
+            );
+
+            cell.addEventListener(
+                "touchcancel",
+                cancelMobileLongPress,
+                {
+                    passive: true
+                }
+            );
+
+            cell.addEventListener(
                 "contextmenu",
                 function (event) {
                     event.preventDefault();
+
+                    if (mobileLongPressTimer) {
+                        const actionTarget =
+                            findMobileActionTarget(
+                                x,
+                                y
+                            );
+
+                        if (actionTarget) {
+                            triggerMobileLongPress(
+                                actionTarget
+                            );
+                        }
+
+                        return;
+                    }
+
+                    if (
+                        Date.now() <
+                        suppressContextMenuUntil
+                    ) {
+                        return;
+                    }
 
                     handleMapRightClick(x, y);
                 }
@@ -169,6 +254,8 @@ function createGrid() {
         connectionLayer
     );
 
+    ensureMobileActionMenu();
+
     calculateTerritory();
     renderMap();
 }
@@ -220,6 +307,14 @@ function handleMapClick(x, y) {
         app.state.selectedTool === "flag"
     ) {
         placeFlag(x, y);
+        return;
+    }
+
+    if (mobileMoveState.active) {
+        handleMobileMoveDestination(
+            x,
+            y
+        );
         return;
     }
 
@@ -970,6 +1065,660 @@ function clearPlayerDragPreview() {
                 );
             }
         );
+}
+
+// ========================================
+// スマートフォンの長押し操作
+// ========================================
+
+function handleMapTouchStart(
+    event,
+    x,
+    y
+) {
+    if (
+        event.touches.length !== 1 ||
+        mobileMoveState.active
+    ) {
+        return;
+    }
+
+    const actionTarget =
+        findMobileActionTarget(x, y);
+
+    if (!actionTarget) {
+        return;
+    }
+
+    cancelMobileLongPress();
+
+    const touch = event.touches[0];
+
+    mobileTouchState.startClientX =
+        touch.clientX;
+    mobileTouchState.startClientY =
+        touch.clientY;
+    mobileTouchState.cellX = x;
+    mobileTouchState.cellY = y;
+    mobileTouchState.longPressTriggered =
+        false;
+
+    mobileLongPressTimer =
+        window.setTimeout(
+            function () {
+                triggerMobileLongPress(
+                    actionTarget
+                );
+            },
+            MOBILE_LONG_PRESS_DELAY
+        );
+}
+
+function triggerMobileLongPress(
+    actionTarget
+) {
+    if (mobileLongPressTimer) {
+        window.clearTimeout(
+            mobileLongPressTimer
+        );
+    }
+
+    mobileLongPressTimer = null;
+    mobileTouchState.longPressTriggered =
+        true;
+    suppressNextMapClick = true;
+    suppressContextMenuUntil =
+        Date.now() + 1200;
+
+    if (
+        navigator.vibrate &&
+        typeof navigator.vibrate ===
+            "function"
+    ) {
+        navigator.vibrate(35);
+    }
+
+    openMobileActionMenu(actionTarget);
+}
+
+function handleMapTouchMove(event) {
+    if (
+        !mobileLongPressTimer ||
+        event.touches.length !== 1
+    ) {
+        return;
+    }
+
+    const touch = event.touches[0];
+
+    const movedX = Math.abs(
+        touch.clientX -
+        mobileTouchState.startClientX
+    );
+
+    const movedY = Math.abs(
+        touch.clientY -
+        mobileTouchState.startClientY
+    );
+
+    if (
+        movedX >
+            MOBILE_LONG_PRESS_MOVE_LIMIT ||
+        movedY >
+            MOBILE_LONG_PRESS_MOVE_LIMIT
+    ) {
+        cancelMobileLongPress();
+    }
+}
+
+function handleMapTouchEnd(event) {
+    const wasLongPress =
+        mobileTouchState.longPressTriggered;
+
+    cancelMobileLongPress();
+
+    if (!wasLongPress) {
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    suppressNextMapClick = true;
+}
+
+function cancelMobileLongPress() {
+    if (mobileLongPressTimer) {
+        window.clearTimeout(
+            mobileLongPressTimer
+        );
+    }
+
+    mobileLongPressTimer = null;
+    mobileTouchState.startClientX = null;
+    mobileTouchState.startClientY = null;
+    mobileTouchState.cellX = null;
+    mobileTouchState.cellY = null;
+    mobileTouchState.longPressTriggered =
+        false;
+}
+
+function findMobileActionTarget(x, y) {
+    const app = window.AllianceApp;
+
+    if (!app) {
+        return null;
+    }
+
+    const flag =
+        app.state.flags.find(
+            function (item) {
+                return (
+                    item.x === x &&
+                    item.y === y
+                );
+            }
+        );
+
+    if (flag) {
+        return {
+            kind: "flag",
+            id: flag.id,
+            label: "同盟旗",
+            grabOffsetX: 0,
+            grabOffsetY: 0
+        };
+    }
+
+    const player =
+        findPlayerAtCell(x, y);
+
+    if (player) {
+        return {
+            kind: "player",
+            id: player.id,
+            label: player.name,
+            grabOffsetX: x - player.x,
+            grabOffsetY: y - player.y
+        };
+    }
+
+    const bearTrap =
+        findBearTrapAtCell(x, y);
+
+    if (bearTrap) {
+        return {
+            kind: "bear",
+            type: bearTrap.type,
+            label:
+                bearTrap.type === "bear1"
+                    ? "熊罠1"
+                    : "熊罠2"
+        };
+    }
+
+    const fixedBuilding =
+        findFixedBuildingAtCell(x, y);
+
+    if (fixedBuilding) {
+        const definition =
+            getFixedBuildingDefinition(
+                fixedBuilding.type
+            );
+
+        return {
+            kind: "fixed",
+            type: fixedBuilding.type,
+            label: definition
+                ? definition.name
+                : "固定施設"
+        };
+    }
+
+    return null;
+}
+
+function ensureMobileActionMenu() {
+    if (
+        document.getElementById(
+            "mobile-action-menu"
+        )
+    ) {
+        return;
+    }
+
+    const menu =
+        document.createElement("div");
+
+    menu.id = "mobile-action-menu";
+    menu.className = "mobile-action-menu";
+    menu.hidden = true;
+    menu.setAttribute("aria-hidden", "true");
+
+    menu.innerHTML = `
+        <div class="mobile-action-sheet"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="mobile-action-title">
+            <div class="mobile-action-handle"></div>
+            <h2 id="mobile-action-title"></h2>
+            <p>操作を選んでください</p>
+            <button type="button"
+                    data-mobile-action="move">
+                移動
+            </button>
+            <button type="button"
+                    class="mobile-action-delete"
+                    data-mobile-action="delete">
+                削除
+            </button>
+            <button type="button"
+                    class="mobile-action-cancel"
+                    data-mobile-action="cancel">
+                キャンセル
+            </button>
+        </div>
+    `;
+
+    menu.addEventListener(
+        "click",
+        function (event) {
+            const actionButton =
+                event.target.closest(
+                    "[data-mobile-action]"
+                );
+
+            if (actionButton) {
+                handleMobileAction(
+                    actionButton.dataset
+                        .mobileAction
+                );
+                return;
+            }
+
+            if (event.target === menu) {
+                closeMobileActionMenu();
+            }
+        }
+    );
+
+    document.body.appendChild(menu);
+
+    const moveCancelButton =
+        document.createElement("button");
+
+    moveCancelButton.id =
+        "mobile-move-cancel";
+    moveCancelButton.type = "button";
+    moveCancelButton.hidden = true;
+    moveCancelButton.textContent =
+        "移動をキャンセル";
+
+    moveCancelButton.addEventListener(
+        "click",
+        function () {
+            clearMobileMoveState();
+            renderMap();
+        }
+    );
+
+    document.body.appendChild(
+        moveCancelButton
+    );
+}
+
+function openMobileActionMenu(target) {
+    ensureMobileActionMenu();
+
+    const menu =
+        document.getElementById(
+            "mobile-action-menu"
+        );
+
+    mobileActionTarget = target;
+
+    const title =
+        menu.querySelector(
+            "#mobile-action-title"
+        );
+
+    const moveButton =
+        menu.querySelector(
+            '[data-mobile-action="move"]'
+        );
+
+    title.textContent = target.label;
+    moveButton.hidden =
+        ![
+            "flag",
+            "player"
+        ].includes(target.kind);
+
+    menu.hidden = false;
+    menu.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    window.requestAnimationFrame(
+        function () {
+            menu.classList.add("open");
+        }
+    );
+}
+
+function closeMobileActionMenu() {
+    const menu =
+        document.getElementById(
+            "mobile-action-menu"
+        );
+
+    if (!menu) {
+        return;
+    }
+
+    menu.classList.remove("open");
+    menu.hidden = true;
+    menu.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    mobileActionTarget = null;
+}
+
+function handleMobileAction(action) {
+    const target = mobileActionTarget;
+
+    if (!target) {
+        closeMobileActionMenu();
+        return;
+    }
+
+    if (action === "move") {
+        startMobileMove(target);
+        closeMobileActionMenu();
+        return;
+    }
+
+    closeMobileActionMenu();
+
+    if (action !== "delete") {
+        return;
+    }
+
+    if (target.kind === "flag") {
+        deleteFlag(target.id);
+        return;
+    }
+
+    if (target.kind === "player") {
+        unplacePlayer(target.id);
+        return;
+    }
+
+    if (target.kind === "bear") {
+        removeBearTrap(target.type);
+        return;
+    }
+
+    if (target.kind === "fixed") {
+        removeFixedBuilding(target.type);
+    }
+}
+
+function startMobileMove(target) {
+    mobileMoveState.active = true;
+    mobileMoveState.type = target.kind;
+    mobileMoveState.id = target.id;
+    mobileMoveState.grabOffsetX =
+        target.grabOffsetX || 0;
+    mobileMoveState.grabOffsetY =
+        target.grabOffsetY || 0;
+
+    renderMobileMoveSource();
+
+    const cancelButton =
+        document.getElementById(
+            "mobile-move-cancel"
+        );
+
+    if (cancelButton) {
+        cancelButton.hidden = false;
+    }
+
+    const instruction =
+        document.getElementById(
+            "instruction"
+        );
+
+    if (instruction) {
+        instruction.textContent =
+            `${target.label}の移動先をタップしてください。`;
+    }
+}
+
+function renderMobileMoveSource() {
+    const app = window.AllianceApp;
+
+    document
+        .querySelectorAll(
+            ".mobile-move-source"
+        )
+        .forEach(
+            function (cell) {
+                cell.classList.remove(
+                    "mobile-move-source"
+                );
+            }
+        );
+
+    if (
+        !mobileMoveState.active ||
+        !app
+    ) {
+        return;
+    }
+
+    if (mobileMoveState.type === "flag") {
+        const flag =
+            app.state.flags.find(
+                function (item) {
+                    return (
+                        item.id ===
+                        mobileMoveState.id
+                    );
+                }
+            );
+
+        const cell = flag
+            ? getCell(flag.x, flag.y)
+            : null;
+
+        if (cell) {
+            cell.classList.add(
+                "mobile-move-source"
+            );
+        }
+
+        return;
+    }
+
+    const player =
+        app.state.players.find(
+            function (item) {
+                return (
+                    item.id ===
+                    mobileMoveState.id
+                );
+            }
+        );
+
+    if (!player) {
+        return;
+    }
+
+    const width =
+        app.settings.player.width || 2;
+    const height =
+        app.settings.player.height || 2;
+
+    for (
+        let offsetY = 0;
+        offsetY < height;
+        offsetY++
+    ) {
+        for (
+            let offsetX = 0;
+            offsetX < width;
+            offsetX++
+        ) {
+            const cell =
+                getCell(
+                    player.x + offsetX,
+                    player.y + offsetY
+                );
+
+            if (cell) {
+                cell.classList.add(
+                    "mobile-move-source"
+                );
+            }
+        }
+    }
+}
+
+function handleMobileMoveDestination(
+    tappedX,
+    tappedY
+) {
+    const app = window.AllianceApp;
+
+    if (
+        !mobileMoveState.active ||
+        !app
+    ) {
+        return;
+    }
+
+    const targetX =
+        tappedX -
+        mobileMoveState.grabOffsetX;
+    const targetY =
+        tappedY -
+        mobileMoveState.grabOffsetY;
+
+    const canMove =
+        mobileMoveState.type === "flag"
+            ? canMoveFlagTo(
+                mobileMoveState.id,
+                targetX,
+                targetY
+            )
+            : canMovePlayerTo(
+                mobileMoveState.id,
+                targetX,
+                targetY
+            );
+
+    if (!canMove) {
+        alert(
+            "この場所へは移動できません。別のマスをタップしてください。"
+        );
+        return;
+    }
+
+    const shouldMove = confirm(
+        "この場所へ移動しますか？"
+    );
+
+    if (!shouldMove) {
+        return;
+    }
+
+    app.saveHistory();
+
+    if (mobileMoveState.type === "flag") {
+        const flag =
+            app.state.flags.find(
+                function (item) {
+                    return (
+                        item.id ===
+                        mobileMoveState.id
+                    );
+                }
+            );
+
+        if (flag) {
+            flag.x = targetX;
+            flag.y = targetY;
+        }
+
+        clearMobileMoveState();
+        calculateTerritory();
+    } else {
+        const player =
+            app.state.players.find(
+                function (item) {
+                    return (
+                        item.id ===
+                        mobileMoveState.id
+                    );
+                }
+            );
+
+        if (player) {
+            player.x = targetX;
+            player.y = targetY;
+            player.isPlaced = true;
+        }
+
+        clearMobileMoveState();
+    }
+
+    renderMap();
+    refreshPlayerUi();
+    app.autoSave();
+}
+
+function clearMobileMoveState() {
+    mobileMoveState.active = false;
+    mobileMoveState.type = null;
+    mobileMoveState.id = null;
+    mobileMoveState.grabOffsetX = 0;
+    mobileMoveState.grabOffsetY = 0;
+
+    document
+        .querySelectorAll(
+            ".mobile-move-source"
+        )
+        .forEach(
+            function (cell) {
+                cell.classList.remove(
+                    "mobile-move-source"
+                );
+            }
+        );
+
+    const cancelButton =
+        document.getElementById(
+            "mobile-move-cancel"
+        );
+
+    if (cancelButton) {
+        cancelButton.hidden = true;
+    }
+
+    const app = window.AllianceApp;
+
+    if (
+        app &&
+        typeof updateInstruction ===
+            "function"
+    ) {
+        updateInstruction(
+            app.state.selectedTool
+        );
+    }
 }
 
 // ========================================
