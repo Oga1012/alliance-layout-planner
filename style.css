@@ -762,3 +762,117 @@ main {
     .player-list-meta {
     color: #334155;
 }
+
+/* スマートフォン長押しメニュー */
+
+#map-container,
+.cell {
+    -webkit-touch-callout: none;
+}
+
+.mobile-action-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(15, 23, 42, 0.58);
+    opacity: 0;
+    transition: opacity 0.16s ease;
+}
+
+.mobile-action-menu[hidden] {
+    display: none;
+}
+
+.mobile-action-menu.open {
+    opacity: 1;
+}
+
+.mobile-action-sheet {
+    width: min(100%, 420px);
+    padding: 10px 14px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow:
+        0 18px 50px
+        rgba(15, 23, 42, 0.35);
+    color: #172033;
+    transform: translateY(18px);
+    transition: transform 0.16s ease;
+}
+
+.mobile-action-menu.open
+    .mobile-action-sheet {
+    transform: translateY(0);
+}
+
+.mobile-action-handle {
+    width: 44px;
+    height: 5px;
+    margin: 0 auto 10px;
+    border-radius: 999px;
+    background: #cbd5e1;
+}
+
+.mobile-action-sheet h2 {
+    margin: 0;
+    font-size: 18px;
+    text-align: center;
+}
+
+.mobile-action-sheet p {
+    margin: 4px 0 12px;
+    color: #64748b;
+    font-size: 13px;
+    text-align: center;
+}
+
+.mobile-action-sheet button {
+    width: 100%;
+    min-height: 46px;
+    margin-top: 8px;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.mobile-action-delete {
+    border-color: #dc2626;
+    background: #b91c1c;
+}
+
+.mobile-action-cancel {
+    border-color: #94a3b8;
+    background: #64748b;
+}
+
+#mobile-move-cancel {
+    position: fixed;
+    right: 16px;
+    bottom: 18px;
+    z-index: 950;
+    min-height: 46px;
+    padding: 10px 16px;
+    border: 2px solid #ffffff;
+    border-radius: 999px;
+    background: #b91c1c;
+    box-shadow:
+        0 8px 24px
+        rgba(15, 23, 42, 0.35);
+    color: #ffffff;
+    font-weight: 800;
+}
+
+#mobile-move-cancel[hidden] {
+    display: none;
+}
+
+.cell.mobile-move-source {
+    z-index: 25;
+    outline: 3px solid #38bdf8;
+    outline-offset: -3px;
+    filter: brightness(1.2);
+}
