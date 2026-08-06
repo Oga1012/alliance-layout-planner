@@ -119,6 +119,25 @@ button:disabled {
     background: #991b1b !important;
 }
 
+.history-button {
+    min-width: 78px;
+    border-color: #38bdf8;
+    background: #075985;
+    font-weight: 700;
+}
+
+.history-button:hover:not(:disabled) {
+    background: #0369a1;
+}
+
+@media (pointer: coarse) {
+    .history-button {
+        min-height: 44px;
+        padding: 9px 13px;
+        font-size: 14px;
+    }
+}
+
 #zoom-display {
     min-width: 52px;
     text-align: center;
