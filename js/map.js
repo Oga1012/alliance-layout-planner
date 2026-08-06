@@ -2995,6 +2995,13 @@ function placeHeadquarters(x, y) {
     renderMap();
     refreshPlayerUi();
 
+    if (
+        typeof refreshCoordinateUi ===
+        "function"
+    ) {
+        refreshCoordinateUi();
+    }
+
     app.autoSave();
 }
 
@@ -5371,8 +5378,26 @@ function updateCoordinateDisplay(x, y) {
         document.getElementById("coordinates") ||
         document.getElementById("coordinate-display");
 
-    if (coordinateElement) {
-        coordinateElement.textContent =
-            `座標：X ${x + 1} / Y ${y + 1}`;
+    if (!coordinateElement) {
+        return;
     }
+
+    const app = window.AllianceApp;
+    const gameCoordinate =
+        app &&
+        typeof app.getGameCoordinate ===
+            "function"
+            ? app.getGameCoordinate(x, y)
+            : null;
+
+    if (!gameCoordinate) {
+        coordinateElement.textContent =
+            `盤面：X ${x + 1} / Y ${y + 1}`;
+        return;
+    }
+
+    coordinateElement.textContent =
+        `盤面 X${x + 1} Y${y + 1} ｜ ` +
+        `ゲーム #${gameCoordinate.kingdom} ` +
+        `X${gameCoordinate.x} Y${gameCoordinate.y}`;
 }

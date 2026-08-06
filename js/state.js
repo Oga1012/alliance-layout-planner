@@ -57,6 +57,11 @@ window.AllianceApp = {
         bear2: "13:00"
     },
     hqDirection: "east",
+    gameCoordinates: {
+        kingdom: 372,
+        headquartersX: 642,
+        headquartersY: 445
+    },
     territoryCells: new Set(),
 
     // プレイヤー名簿は全レイアウト共通
@@ -677,6 +682,12 @@ window.AllianceApp.createEmptyLayout =
 
             hqDirection: "east",
 
+            gameCoordinates: {
+                kingdom: 372,
+                headquartersX: 642,
+                headquartersY: 445
+            },
+
             playerPlacements: [],
 
             createdAt:
@@ -767,6 +778,11 @@ window.AllianceApp.createHistorySnapshot =
                 app.state.hqDirection ||
                 "east",
 
+            gameCoordinates:
+                app.cloneGameCoordinates(
+                    app.state.gameCoordinates
+                ),
+
             players:
                 app.state.players.map(
                     function (player) {
@@ -791,6 +807,68 @@ window.AllianceApp.createHistorySnapshot =
 
             selectedPlayerId:
                 app.state.selectedPlayerId
+        };
+    };
+
+
+// =======================================
+// ゲーム内座標設定を複製する
+// =======================================
+
+window.AllianceApp.cloneGameCoordinates =
+    function (gameCoordinates) {
+        const source = gameCoordinates || {};
+
+        const kingdom = Number(source.kingdom);
+        const headquartersX =
+            Number(source.headquartersX);
+        const headquartersY =
+            Number(source.headquartersY);
+
+        return {
+            kingdom:
+                Number.isFinite(kingdom)
+                    ? kingdom
+                    : 372,
+            headquartersX:
+                Number.isFinite(headquartersX)
+                    ? headquartersX
+                    : 642,
+            headquartersY:
+                Number.isFinite(headquartersY)
+                    ? headquartersY
+                    : 445
+        };
+    };
+
+
+// =======================================
+// 盤面座標をゲーム内座標へ変換する
+// =======================================
+
+window.AllianceApp.getGameCoordinate =
+    function (mapX, mapY) {
+        const app = window.AllianceApp;
+        const headquarters =
+            app.state.headquarters;
+
+        if (!headquarters) {
+            return null;
+        }
+
+        const settings =
+            app.cloneGameCoordinates(
+                app.state.gameCoordinates
+            );
+
+        return {
+            kingdom: settings.kingdom,
+            x:
+                settings.headquartersX +
+                (mapX - headquarters.x),
+            y:
+                settings.headquartersY -
+                (mapY - headquarters.y)
         };
     };
 
@@ -891,6 +969,11 @@ window.AllianceApp.restoreHistorySnapshot =
             snapshot.hqDirection ||
             "east";
 
+        app.state.gameCoordinates =
+            app.cloneGameCoordinates(
+                snapshot.gameCoordinates
+            );
+
         app.state.players =
             snapshot.players.map(
                 function (player) {
@@ -918,6 +1001,13 @@ window.AllianceApp.restoreHistorySnapshot =
             "function"
         ) {
             refreshBearTrapUi();
+        }
+
+        if (
+            typeof refreshCoordinateUi ===
+            "function"
+        ) {
+            refreshCoordinateUi();
         }
 
         if (
@@ -1090,6 +1180,11 @@ window.AllianceApp.saveCurrentLayoutState =
             app.state.hqDirection ||
             "east";
 
+        currentLayout.gameCoordinates =
+            app.cloneGameCoordinates(
+                app.state.gameCoordinates
+            );
+
         currentLayout.playerPlacements =
             app.clonePlayerPlacements(
                 app.getCurrentPlayerPlacements()
@@ -1207,6 +1302,11 @@ window.AllianceApp.loadLayoutState =
             layout.hqDirection ||
             "east";
 
+        app.state.gameCoordinates =
+            app.cloneGameCoordinates(
+                layout.gameCoordinates
+            );
+
         app.applyPlayerPlacements(
             layout.playerPlacements
         );
@@ -1295,6 +1395,11 @@ window.AllianceApp.duplicateCurrentLayout =
             hqDirection:
                 currentLayout.hqDirection ||
                 "east",
+
+            gameCoordinates:
+                app.cloneGameCoordinates(
+                    currentLayout.gameCoordinates
+                ),
 
             playerPlacements:
                 app.clonePlayerPlacements(

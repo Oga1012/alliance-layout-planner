@@ -528,6 +528,13 @@ function refreshAfterLayoutChange() {
         refreshBearTrapUi();
     }
 
+    if (
+        typeof refreshCoordinateUi ===
+        "function"
+    ) {
+        refreshCoordinateUi();
+    }
+
     refreshLayoutUi();
 
     app.autoSave();

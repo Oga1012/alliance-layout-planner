@@ -83,6 +83,11 @@ window.AllianceApp.createExportData = function () {
                             layout.hqDirection ||
                             "east",
 
+                        gameCoordinates:
+                            app.cloneGameCoordinates(
+                                layout.gameCoordinates
+                            ),
+
                         playerPlacements:
                             app.clonePlayerPlacements(
                                 layout.playerPlacements
@@ -546,6 +551,13 @@ if (
     "function"
 ) {
     refreshBearTrapUi();
+}
+
+if (
+    typeof refreshCoordinateUi ===
+    "function"
+) {
+    refreshCoordinateUi();
 }
 
 alert(

@@ -26,6 +26,13 @@ if (
 }
 
 if (
+    typeof refreshCoordinateUi ===
+    "function"
+) {
+    refreshCoordinateUi();
+}
+
+if (
     typeof refreshBearTrapUi ===
     "function"
 ) {
