@@ -316,6 +316,48 @@
                 </div>
 
 
+                <div id="game-coordinate-settings">
+                    <h3>ゲーム内座標</h3>
+
+                    <div class="game-coordinate-inputs">
+                        <label>
+                            <span>王国</span>
+                            <input
+                                type="number"
+                                id="kingdom-number"
+                                value="372"
+                                min="1"
+                                step="1"
+                            >
+                        </label>
+
+                        <label>
+                            <span>本部 X</span>
+                            <input
+                                type="number"
+                                id="headquarters-game-x"
+                                value="642"
+                                step="1"
+                            >
+                        </label>
+
+                        <label>
+                            <span>本部 Y</span>
+                            <input
+                                type="number"
+                                id="headquarters-game-y"
+                                value="445"
+                                step="1"
+                            >
+                        </label>
+                    </div>
+
+                    <p id="game-coordinate-message">
+                        本部を配置すると、マスに合わせてゲーム座標を表示します。
+                    </p>
+                </div>
+
+
                 <div class="layout-button-area">
 
                     <button
@@ -683,8 +725,8 @@
 </main>
 
 
-<script src="js/state.js?v=20260806-history-buttons"></script>
-<script src="js/map.js?v=20260806-mobile"></script>
+<script src="js/state.js?v=20260806-coordinates"></script>
+<script src="js/map.js?v=20260806-coordinates"></script>
 
 <script src="js/toolbar-ui.js"></script>
 <script src="js/collapse-ui.js?v=20260806-collapse"></script>
@@ -692,6 +734,7 @@
 <script src="js/player-ui.js"></script>
 <script src="js/csv.js"></script>
 <script src="js/layout-ui.js"></script>
+<script src="js/coordinate-ui.js?v=20260806-coordinates"></script>
 <script src="js/save-load.js"></script>
 
 <script src="js/app.js?v=20260806-history-buttons"></script>
