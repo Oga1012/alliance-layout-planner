@@ -2281,8 +2281,13 @@ function deleteFlag(flagId) {
 // 熊罠を基準に本部と旗を自動配置する
 // ========================================
 
-function autoGenerateHeadquartersAndFlags() {
+function autoGenerateHeadquartersAndFlags(
+    options = {}
+) {
     const app = window.AllianceApp;
+
+    const preserveHeadquarters =
+        options.preserveHeadquarters === true;
 
     const bear1 =
         app.state.bearTraps.bear1;
@@ -2293,6 +2298,16 @@ function autoGenerateHeadquartersAndFlags() {
     if (!bear1 || !bear2) {
         alert(
             "先に熊罠1と熊罠2を配置してください。"
+        );
+        return;
+    }
+
+    if (
+        preserveHeadquarters &&
+        !app.state.headquarters
+    ) {
+        alert(
+            "先に同盟本部を手動で配置してください。"
         );
         return;
     }
@@ -2309,8 +2324,11 @@ function autoGenerateHeadquartersAndFlags() {
     if (
         hasExistingLayout &&
         !confirm(
-            "現在の本部・旗・プレイヤー配置を自動配置で置き換えます。\n" +
-            "プレイヤー名簿と熊罠は残ります。\n\n続けますか？"
+            preserveHeadquarters
+                ? "手動配置した本部を残し、現在の旗・プレイヤー配置を置き換えます。\n" +
+                    "プレイヤー名簿と熊罠は残ります。\n\n続けますか？"
+                : "現在の本部・旗・プレイヤー配置を自動配置で置き換えます。\n" +
+                    "プレイヤー名簿と熊罠は残ります。\n\n続けますか？"
         )
     ) {
         return;
@@ -2318,8 +2336,10 @@ function autoGenerateHeadquartersAndFlags() {
 
     app.saveHistory();
 
-    app.state.headquarters =
-        createAutomaticHeadquarters();
+    if (!preserveHeadquarters) {
+        app.state.headquarters =
+            createAutomaticHeadquarters();
+    }
 
     app.state.flags = [];
     resetPlayerPlacements();
@@ -2415,7 +2435,11 @@ function autoGenerateHeadquartersAndFlags() {
 
     if (messageElement) {
         messageElement.textContent =
-            `本部と旗${app.state.flags.length}本を自動配置しました。` +
+            (
+                preserveHeadquarters
+                    ? `手動本部を残して旗${app.state.flags.length}本を自動配置しました。`
+                    : `本部と旗${app.state.flags.length}本を自動配置しました。`
+            ) +
             ` 接続中：${connectedCount}本。`;
     }
 }
@@ -2994,6 +3018,13 @@ function placeHeadquarters(x, y) {
     calculateTerritory();
     renderMap();
     refreshPlayerUi();
+
+    if (
+        typeof refreshBearTrapUi ===
+        "function"
+    ) {
+        refreshBearTrapUi();
+    }
 
     if (
         typeof refreshCoordinateUi ===

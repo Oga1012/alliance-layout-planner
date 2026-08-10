@@ -22,6 +22,11 @@ const hqDirectionSelect =
         "hq-direction"
     );
 
+const autoLayoutModeSelect =
+    document.getElementById(
+        "auto-layout-mode"
+    );
+
 const bear1Summary =
     document.getElementById(
         "bear1-summary"
@@ -130,13 +135,56 @@ function refreshBearTrapUi() {
             "east";
     }
 
+    const autoLayoutMode =
+        autoLayoutModeSelect
+            ? autoLayoutModeSelect.value
+            : "headquarters-and-flags";
+
+    const preserveHeadquarters =
+        autoLayoutMode === "flags-only";
+
+    if (hqDirectionSelect) {
+        hqDirectionSelect.disabled =
+            preserveHeadquarters;
+    }
+
     if (autoGenerateLayoutButton) {
         autoGenerateLayoutButton.disabled =
             !app.state.bearTraps.bear1 ||
-            !app.state.bearTraps.bear2;
+            !app.state.bearTraps.bear2 ||
+            (
+                preserveHeadquarters &&
+                !app.state.headquarters
+            );
+
+        autoGenerateLayoutButton.textContent =
+            preserveHeadquarters
+                ? "手動本部を残して旗を自動配置"
+                : "本部と旗を自動配置";
     }
 
     refreshBearGroupSummary();
+}
+
+
+if (autoLayoutModeSelect) {
+    autoLayoutModeSelect.addEventListener(
+        "change",
+        function () {
+            const preserveHeadquarters =
+                autoLayoutModeSelect.value ===
+                "flags-only";
+
+            refreshBearTrapUi();
+
+            if (bearTimeMessage) {
+                bearTimeMessage.textContent =
+                    preserveHeadquarters
+                        ? "先に本部を手動配置すると、その位置を残して旗だけ自動配置します。"
+                        : "熊罠を基準に、本部と旗をまとめて自動配置します。";
+            }
+        }
+    );
 }
 
 function createPrioritySummary(players) {
@@ -341,7 +389,12 @@ if (autoGenerateLayoutButton) {
                 return;
             }
 
-            autoGenerateHeadquartersAndFlags();
+            autoGenerateHeadquartersAndFlags({
+                preserveHeadquarters:
+                    autoLayoutModeSelect &&
+                    autoLayoutModeSelect.value ===
+                        "flags-only"
+            });
         }
     );
 }
