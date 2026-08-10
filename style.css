@@ -616,6 +616,25 @@ main {
     padding: 5px;
 }
 
+.auto-layout-mode-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 7px;
+    margin: 10px 0;
+    font-size: 13px;
+}
+
+.auto-layout-mode-row select {
+    max-width: 155px;
+    padding: 5px;
+}
+
+.hq-direction-row select:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 #bear-group-summary {
     display: grid;
     gap: 6px;

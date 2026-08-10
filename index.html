@@ -491,6 +491,24 @@
                     </select>
                 </div>
 
+                <div class="auto-layout-mode-row">
+                    <label for="auto-layout-mode">
+                        自動配置方法
+                    </label>
+
+                    <select id="auto-layout-mode">
+                        <option
+                            value="headquarters-and-flags"
+                            selected
+                        >
+                            本部＋旗
+                        </option>
+                        <option value="flags-only">
+                            手動本部＋旗だけ
+                        </option>
+                    </select>
+                </div>
+
                 <div id="bear-group-summary">
                     <div
                         class="bear-summary-card"
@@ -512,7 +530,7 @@
                     type="button"
                     id="auto-generate-layout"
                 >
-                    本部・旗を自動配置
+                    本部と旗を自動配置
                 </button>
 
                 <p id="bear-time-message">
@@ -726,11 +744,11 @@
 
 
 <script src="js/state.js?v=20260806-coordinates"></script>
-<script src="js/map.js?v=20260806-coordinates"></script>
+<script src="js/map.js?v=20260810-auto-mode"></script>
 
 <script src="js/toolbar-ui.js"></script>
 <script src="js/collapse-ui.js?v=20260806-collapse"></script>
-<script src="js/bear-ui.js"></script>
+<script src="js/bear-ui.js?v=20260810-auto-mode"></script>
 <script src="js/player-ui.js"></script>
 <script src="js/csv.js"></script>
 <script src="js/layout-ui.js"></script>
