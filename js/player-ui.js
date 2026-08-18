@@ -203,6 +203,21 @@ function renderPlayerList() {
             mainText.textContent =
                 player.name;
 
+            if (player.isTemporary) {
+                const temporaryBadge =
+                    document.createElement("span");
+
+                temporaryBadge.className =
+                    "temporary-player-badge";
+
+                temporaryBadge.textContent =
+                    "仮";
+
+                mainText.appendChild(
+                    temporaryBadge
+                );
+            }
+
             const metaText =
                 document.createElement(
                     "span"
@@ -553,6 +568,288 @@ function refreshPlayerUi() {
     updatePlayerCounts();
     updatePlayerToolState();
     updateSelectedPlayerDisplay();
+}
+
+
+// =======================================
+// 仮プレイヤーを追加する
+// =======================================
+
+function addTemporaryPlayers() {
+    const app = window.AllianceApp;
+
+    const countInput =
+        document.getElementById(
+            "temporary-player-count"
+        );
+
+    const prioritySelect =
+        document.getElementById(
+            "temporary-player-priority"
+        );
+
+    const bearSelect =
+        document.getElementById(
+            "temporary-player-bear"
+        );
+
+    const count = Math.floor(
+        Number(countInput && countInput.value)
+    );
+
+    if (
+        !Number.isFinite(count) ||
+        count < 1 ||
+        count > 200
+    ) {
+        showTemporaryPlayerMessage(
+            "人数は1～200人で入力してください。",
+            true
+        );
+        return;
+    }
+
+    const priority =
+        prioritySelect
+            ? prioritySelect.value
+            : "";
+
+    const bearType =
+        bearSelect
+            ? bearSelect.value
+            : "";
+
+    const preferredTime =
+        bearType
+            ? (
+                app.state.bearTrapTimes[
+                    bearType
+                ] || ""
+            )
+            : "";
+
+    let nextNumber =
+        app.state.players.reduce(
+            function (maximum, player) {
+                if (!player.isTemporary) {
+                    return maximum;
+                }
+
+                const matched =
+                    String(player.name || "")
+                        .match(/^仮(\d+)$/);
+
+                return matched
+                    ? Math.max(
+                        maximum,
+                        Number(matched[1])
+                    )
+                    : maximum;
+            },
+            0
+        ) + 1;
+
+    if (
+        typeof app.saveHistory ===
+        "function"
+    ) {
+        app.saveHistory();
+    }
+
+    const addedPlayers = [];
+
+    for (let index = 0; index < count; index++) {
+        const temporaryNumber =
+            nextNumber + index;
+
+        const temporaryPlayer =
+            app.normalizePlayerData({
+                id:
+                    app.createPlayerId(
+                        `temporary-${temporaryNumber}`
+                    ),
+                name:
+                    `仮${String(temporaryNumber).padStart(2, "0")}`,
+                priority: priority,
+                preferredTime: preferredTime,
+                allianceRank: "",
+                accountType: "仮",
+                isTemporary: true,
+                isPlaced: false,
+                x: null,
+                y: null
+            });
+
+        app.state.players.push(
+            temporaryPlayer
+        );
+
+        addedPlayers.push(
+            temporaryPlayer
+        );
+    }
+
+    if (
+        !app.state.selectedPlayerId &&
+        addedPlayers.length > 0
+    ) {
+        app.state.selectedPlayerId =
+            addedPlayers[0].id;
+    }
+
+    app.saveCurrentLayoutState();
+    app.autoSave();
+
+    refreshPlayerUi();
+
+    if (
+        typeof refreshBearTrapUi ===
+        "function"
+    ) {
+        refreshBearTrapUi();
+    }
+
+    showTemporaryPlayerMessage(
+        `${count}人の仮プレイヤーを追加しました。`,
+        false
+    );
+}
+
+
+// =======================================
+// 仮プレイヤーだけ削除する
+// =======================================
+
+function deleteTemporaryPlayers() {
+    const app = window.AllianceApp;
+
+    const temporaryPlayers =
+        app.state.players.filter(
+            function (player) {
+                return player.isTemporary;
+            }
+        );
+
+    if (temporaryPlayers.length === 0) {
+        showTemporaryPlayerMessage(
+            "削除する仮プレイヤーはいません。",
+            true
+        );
+        return;
+    }
+
+    const shouldDelete = confirm(
+        `${temporaryPlayers.length}人の仮プレイヤーを削除しますか？\n` +
+        "実際のプレイヤーは削除されません。"
+    );
+
+    if (!shouldDelete) {
+        return;
+    }
+
+    if (
+        typeof app.saveHistory ===
+        "function"
+    ) {
+        app.saveHistory();
+    }
+
+    const temporaryIds =
+        new Set(
+            temporaryPlayers.map(
+                function (player) {
+                    return player.id;
+                }
+            )
+        );
+
+    app.state.players =
+        app.state.players.filter(
+            function (player) {
+                return !temporaryIds.has(
+                    player.id
+                );
+            }
+        );
+
+    if (
+        temporaryIds.has(
+            app.state.selectedPlayerId
+        )
+    ) {
+        app.state.selectedPlayerId = null;
+    }
+
+    app.cleanLayoutPlayerPlacements();
+    app.saveCurrentLayoutState();
+    app.autoSave();
+
+    refreshPlayerUi();
+
+    if (
+        typeof refreshBearTrapUi ===
+        "function"
+    ) {
+        refreshBearTrapUi();
+    }
+
+    if (
+        typeof renderMap ===
+        "function"
+    ) {
+        renderMap();
+    }
+
+    showTemporaryPlayerMessage(
+        `${temporaryPlayers.length}人の仮プレイヤーを削除しました。`,
+        false
+    );
+}
+
+
+function showTemporaryPlayerMessage(
+    message,
+    isError
+) {
+    const messageElement =
+        document.getElementById(
+            "temporary-player-message"
+        );
+
+    if (!messageElement) {
+        return;
+    }
+
+    messageElement.textContent = message;
+    messageElement.classList.toggle(
+        "error",
+        Boolean(isError)
+    );
+}
+
+
+const addTemporaryPlayersButton =
+    document.getElementById(
+        "add-temporary-players"
+    );
+
+const deleteTemporaryPlayersButton =
+    document.getElementById(
+        "delete-temporary-players"
+    );
+
+if (addTemporaryPlayersButton) {
+    addTemporaryPlayersButton.addEventListener(
+        "click",
+        addTemporaryPlayers
+    );
+}
+
+if (deleteTemporaryPlayersButton) {
+    deleteTemporaryPlayersButton.addEventListener(
+        "click",
+        deleteTemporaryPlayers
+    );
 }
 
 const autoPlacePlayersButton =

@@ -215,6 +215,8 @@ window.AllianceApp.normalizePlayerData =
                 String(
                     source.accountType || ""
                 ).trim(),
+            isTemporary:
+                source.isTemporary === true,
             isPlaced:
                 source.isPlaced === true,
             x:
@@ -797,6 +799,8 @@ window.AllianceApp.createHistorySnapshot =
                                 player.allianceRank || "",
                             accountType:
                                 player.accountType || "",
+                            isTemporary:
+                                player.isTemporary === true,
                             x: player.x,
                             y: player.y,
                             isPlaced:

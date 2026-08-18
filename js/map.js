@@ -2399,6 +2399,23 @@ function autoGenerateHeadquartersAndFlags(
         autoFlagPoints
     );
 
+    const automaticFlagCountBeforePruning =
+        autoFlagPoints.length;
+
+    pruneAutomaticFlagPoints(
+        autoFlagPoints,
+        {
+            bear1:
+                playerGroups.bear1.length,
+            bear2:
+                playerGroups.bear2.length
+        }
+    );
+
+    const removedAutomaticFlagCount =
+        automaticFlagCountBeforePruning -
+        autoFlagPoints.length;
+
     app.state.flags =
         autoFlagPoints.map(
             function (point) {
@@ -2440,7 +2457,13 @@ function autoGenerateHeadquartersAndFlags(
                     ? `手動本部を残して旗${app.state.flags.length}本を自動配置しました。`
                     : `本部と旗${app.state.flags.length}本を自動配置しました。`
             ) +
-            ` 接続中：${connectedCount}本。`;
+            ` 接続中：${connectedCount}本。` +
+            " 熊罠周辺に多く配置できる案を選びました。" +
+            (
+                removedAutomaticFlagCount > 0
+                    ? ` 不要な旗${removedAutomaticFlagCount}本を自動削減しました。`
+                    : " 削減できる余分な旗はありませんでした。"
+            );
     }
 }
 
@@ -2574,68 +2597,165 @@ function addAutomaticBearCluster(
             app.state.headquarters.y + 1
     };
 
-    const differenceX =
-        headquartersCenter.x - center.x;
-
-    const differenceY =
-        headquartersCenter.y - center.y;
-
-    const nearOffset = (
-        Math.abs(differenceX) >=
-        Math.abs(differenceY)
-    )
-        ? {
-            x: Math.sign(differenceX) * 2,
-            y: 0
-        }
-        : {
-            x: 0,
-            y: Math.sign(differenceY) * 2
-        };
-
-    const clusterPoints = [];
-
-    const nearPoint =
-        addAutomaticFlagNear(
-            center.x + nearOffset.x,
-            center.y + nearOffset.y,
-            autoFlagPoints,
-            null,
-            true
-        );
-
-    if (nearPoint) {
-        clusterPoints.push(nearPoint);
-    }
-
     const outerFlagCount =
         Math.max(
             8,
             requiredFlagCount - 1
         );
 
-    const offsets =
-        createAutomaticClusterOffsets(
-            outerFlagCount
-        );
-
-    offsets.forEach(
-        function (offset) {
-            const point =
-                addAutomaticFlagNear(
-                    center.x + offset.x,
-                    center.y + offset.y,
-                    autoFlagPoints,
-                    null
-                );
-
-            if (point) {
-                clusterPoints.push(point);
-            }
+    const anchorDirections = [
+        { x: 1, y: 0 },
+        { x: -1, y: 0 },
+        { x: 0, y: 1 },
+        { x: 0, y: -1 },
+        { x: 1, y: 1 },
+        { x: 1, y: -1 },
+        { x: -1, y: 1 },
+        { x: -1, y: -1 }
+    ].sort(
+        function (first, second) {
+            return (
+                getChebyshevDistance(
+                    {
+                        x: center.x + first.x * 4,
+                        y: center.y + first.y * 4
+                    },
+                    headquartersCenter
+                ) -
+                getChebyshevDistance(
+                    {
+                        x: center.x + second.x * 4,
+                        y: center.y + second.y * 4
+                    },
+                    headquartersCenter
+                )
+            );
         }
     );
 
-    return clusterPoints;
+    let bestCandidate = null;
+
+    [4, 3, 2].forEach(
+        function (anchorDistance) {
+            anchorDirections.forEach(
+                function (direction) {
+                    const candidatePoints =
+                        autoFlagPoints.map(
+                            function (point) {
+                                return {
+                                    x: point.x,
+                                    y: point.y
+                                };
+                            }
+                        );
+
+                    const candidateCluster = [];
+
+                    const nearPoint =
+                        addAutomaticFlagNear(
+                            center.x +
+                                direction.x *
+                                anchorDistance,
+                            center.y +
+                                direction.y *
+                                anchorDistance,
+                            candidatePoints,
+                            null,
+                            true
+                        );
+
+                    if (!nearPoint) {
+                        return;
+                    }
+
+                    candidateCluster.push(
+                        nearPoint
+                    );
+
+                    const offsets =
+                        createAutomaticClusterOffsets(
+                            outerFlagCount
+                        );
+
+                    offsets.forEach(
+                        function (offset) {
+                            const point =
+                                addAutomaticFlagNear(
+                                    center.x + offset.x,
+                                    center.y + offset.y,
+                                    candidatePoints,
+                                    null
+                                );
+
+                            if (
+                                point &&
+                                !candidateCluster.some(
+                                    function (item) {
+                                        return (
+                                            item.x === point.x &&
+                                            item.y === point.y
+                                        );
+                                    }
+                                )
+                            ) {
+                                candidateCluster.push(
+                                    point
+                                );
+                            }
+                        }
+                    );
+
+                    const score =
+                        scoreAutomaticBearCluster(
+                            type,
+                            playerCount,
+                            candidatePoints
+                        );
+
+                    if (
+                        !bestCandidate ||
+                        score > bestCandidate.score
+                    ) {
+                        bestCandidate = {
+                            score: score,
+                            allPoints:
+                                candidatePoints,
+                            clusterPoints:
+                                candidateCluster
+                        };
+                    }
+                }
+            );
+        }
+    );
+
+    if (!bestCandidate) {
+        return [];
+    }
+
+    autoFlagPoints.length = 0;
+
+    bestCandidate.allPoints.forEach(
+        function (point) {
+            autoFlagPoints.push({
+                x: point.x,
+                y: point.y
+            });
+        }
+    );
+
+    return bestCandidate.clusterPoints.map(
+        function (point) {
+            return autoFlagPoints.find(
+                function (item) {
+                    return (
+                        item.x === point.x &&
+                        item.y === point.y
+                    );
+                }
+            );
+        }
+    ).filter(Boolean);
 }
 
 function createAutomaticClusterOffsets(
@@ -2644,10 +2764,10 @@ function createAutomaticClusterOffsets(
     const offsets = [];
 
     for (
-        let radius = 5;
+        let radius = 6;
         offsets.length < requiredCount &&
-        radius <= 29;
-        radius += 6
+        radius <= 34;
+        radius += 7
     ) {
         const ringOffsets = [
             { x: 0, y: -radius },
@@ -2676,6 +2796,777 @@ function createAutomaticClusterOffsets(
         0,
         requiredCount
     );
+}
+
+
+// 熊罠周辺へ実際に2×2プレイヤーを仮配置し、
+// 近距離の収容人数が多い旗配置ほど高く評価する。
+function scoreAutomaticBearCluster(
+    bearType,
+    playerCount,
+    flagPoints,
+    returnMetrics = false
+) {
+    const app = window.AllianceApp;
+
+    const trap =
+        app.state.bearTraps[bearType];
+
+    if (!trap) {
+        return -Infinity;
+    }
+
+    const evaluationCount =
+        Math.max(
+            24,
+            Number(playerCount) || 0
+        );
+
+    const territoryCells =
+        createAutomaticTerritorySet(
+            flagPoints
+        );
+
+    const trapCenter = {
+        x: trap.x + 1,
+        y: trap.y + 1
+    };
+
+    const otherBearType =
+        bearType === "bear1"
+            ? "bear2"
+            : "bear1";
+
+    const otherTrap =
+        app.state.bearTraps[
+            otherBearType
+        ];
+
+    const otherCenter =
+        otherTrap
+            ? {
+                x: otherTrap.x + 1,
+                y: otherTrap.y + 1
+            }
+            : null;
+
+    const candidates = [];
+
+    for (
+        let y = 0;
+        y <= GRID_SIZE - 2;
+        y++
+    ) {
+        for (
+            let x = 0;
+            x <= GRID_SIZE - 2;
+            x++
+        ) {
+            if (
+                !isAutomaticScoringPositionAvailable(
+                    x,
+                    y,
+                    territoryCells,
+                    flagPoints
+                )
+            ) {
+                continue;
+            }
+
+            const playerCenter = {
+                x: x + 0.5,
+                y: y + 0.5
+            };
+
+            const distance =
+                getAutomaticPlayerDistance(
+                    playerCenter,
+                    trapCenter
+                );
+
+            if (
+                otherCenter &&
+                distance >
+                    getAutomaticPlayerDistance(
+                        playerCenter,
+                        otherCenter
+                    )
+            ) {
+                continue;
+            }
+
+            candidates.push({
+                x: x,
+                y: y,
+                distance: distance
+            });
+        }
+    }
+
+    candidates.sort(
+        function (first, second) {
+            if (
+                first.distance !==
+                second.distance
+            ) {
+                return (
+                    first.distance -
+                    second.distance
+                );
+            }
+
+            if (first.y !== second.y) {
+                return first.y - second.y;
+            }
+
+            return first.x - second.x;
+        }
+    );
+
+    const occupiedCells = new Set();
+    const selectedDistances = [];
+
+    for (const candidate of candidates) {
+        if (
+            !areAutomaticPlayerCellsFree(
+                candidate.x,
+                candidate.y,
+                occupiedCells
+            )
+        ) {
+            continue;
+        }
+
+        markAutomaticPlayerCells(
+            candidate.x,
+            candidate.y,
+            occupiedCells
+        );
+
+        selectedDistances.push(
+            candidate.distance
+        );
+
+        if (
+            selectedDistances.length >=
+            evaluationCount
+        ) {
+            break;
+        }
+    }
+
+    const nearCount =
+        selectedDistances.filter(
+            function (distance) {
+                return distance <= 36;
+            }
+        ).length;
+
+    const mediumCount =
+        selectedDistances.filter(
+            function (distance) {
+                return distance <= 100;
+            }
+        ).length;
+
+    const distanceTotal =
+        selectedDistances.reduce(
+            function (total, distance) {
+                return total + distance;
+            },
+            0
+        );
+
+    const coveredCells =
+        countAutomaticCoveredCellsNearBear(
+            territoryCells,
+            trapCenter,
+            12
+        );
+
+    const flagsInsidePlayerZone =
+        flagPoints.filter(
+            function (point) {
+                return (
+                    getChebyshevDistance(
+                        point,
+                        trapCenter
+                    ) <= 4
+                );
+            }
+        ).length;
+
+    const metrics = {
+        placedCount:
+            selectedDistances.length,
+        nearCount: nearCount,
+        mediumCount: mediumCount,
+        distanceTotal: distanceTotal,
+        coveredCells: coveredCells,
+        flagsInsidePlayerZone:
+            flagsInsidePlayerZone
+    };
+
+    if (returnMetrics) {
+        return metrics;
+    }
+
+    return (
+        selectedDistances.length * 1000000000 +
+        nearCount * 10000000 +
+        mediumCount * 100000 +
+        coveredCells * 100 -
+        flagsInsidePlayerZone * 10000 -
+        distanceTotal
+    );
+}
+
+
+function createAutomaticTerritorySet(
+    flagPoints
+) {
+    const app = window.AllianceApp;
+    const territoryCells = new Set();
+
+    if (app.state.headquarters) {
+        addAutomaticSquareTerritory(
+            territoryCells,
+            app.state.headquarters.x + 1,
+            app.state.headquarters.y + 1,
+            app.settings.headquarters
+                .territorySize || 15
+        );
+    }
+
+    flagPoints.forEach(
+        function (point) {
+            addAutomaticSquareTerritory(
+                territoryCells,
+                point.x,
+                point.y,
+                app.settings.flag
+                    .territorySize || 7
+            );
+        }
+    );
+
+    return territoryCells;
+}
+
+
+function addAutomaticSquareTerritory(
+    territoryCells,
+    centerX,
+    centerY,
+    size
+) {
+    const radius = Math.floor(size / 2);
+
+    for (
+        let y = centerY - radius;
+        y <= centerY + radius;
+        y++
+    ) {
+        for (
+            let x = centerX - radius;
+            x <= centerX + radius;
+            x++
+        ) {
+            if (isInsideGrid(x, y)) {
+                territoryCells.add(
+                    `${x},${y}`
+                );
+            }
+        }
+    }
+}
+
+
+function isAutomaticScoringPositionAvailable(
+    x,
+    y,
+    territoryCells,
+    flagPoints
+) {
+    let territoryCellCount = 0;
+
+    for (let offsetY = 0; offsetY < 2; offsetY++) {
+        for (let offsetX = 0; offsetX < 2; offsetX++) {
+            if (
+                territoryCells.has(
+                    `${x + offsetX},${y + offsetY}`
+                )
+            ) {
+                territoryCellCount++;
+            }
+        }
+    }
+
+    if (territoryCellCount < 2) {
+        return false;
+    }
+
+    if (
+        doesRectangleOverlapHeadquarters(
+            x,
+            y,
+            2,
+            2
+        ) ||
+        doesRectangleOverlapBearTrap(
+            x,
+            y,
+            2,
+            2
+        ) ||
+        doesRectangleOverlapFixedBuilding(
+            x,
+            y,
+            2,
+            2
+        )
+    ) {
+        return false;
+    }
+
+    return !flagPoints.some(
+        function (point) {
+            return (
+                point.x >= x &&
+                point.x < x + 2 &&
+                point.y >= y &&
+                point.y < y + 2
+            );
+        }
+    );
+}
+
+
+function countAutomaticCoveredCellsNearBear(
+    territoryCells,
+    center,
+    radius
+) {
+    let count = 0;
+
+    for (
+        let y = center.y - radius;
+        y <= center.y + radius;
+        y++
+    ) {
+        for (
+            let x = center.x - radius;
+            x <= center.x + radius;
+            x++
+        ) {
+            if (
+                isInsideGrid(x, y) &&
+                territoryCells.has(`${x},${y}`)
+            ) {
+                count++;
+            }
+        }
+    }
+
+    return count;
+}
+
+
+// 自動配置後に、熊罠周辺の収容力・接続・領地の穴を
+// 悪化させない旗だけを取り除く。
+function pruneAutomaticFlagPoints(
+    flagPoints,
+    playerCounts
+) {
+    const app = window.AllianceApp;
+
+    if (
+        !app.state.headquarters ||
+        flagPoints.length <= 1
+    ) {
+        return;
+    }
+
+    let currentMetrics = {
+        bear1:
+            scoreAutomaticBearCluster(
+                "bear1",
+                playerCounts.bear1,
+                flagPoints,
+                true
+            ),
+        bear2:
+            scoreAutomaticBearCluster(
+                "bear2",
+                playerCounts.bear2,
+                flagPoints,
+                true
+            )
+    };
+
+    let currentHoleCount =
+        countAutomaticTerritoryHoleCells(
+            flagPoints
+        );
+
+    let removedInPass = true;
+
+    while (removedInPass) {
+        removedInPass = false;
+
+        const candidates =
+            getAutomaticPruningCandidates(
+                flagPoints
+            );
+
+        for (const candidate of candidates) {
+            const candidateIndex =
+                flagPoints.indexOf(candidate);
+
+            if (candidateIndex < 0) {
+                continue;
+            }
+
+            const remainingPoints =
+                flagPoints.filter(
+                    function (_, index) {
+                        return index !== candidateIndex;
+                    }
+                );
+
+            if (
+                remainingPoints.length === 0 ||
+                !areAutomaticFlagsConnected(
+                    remainingPoints
+                )
+            ) {
+                continue;
+            }
+
+            const nextMetrics = {
+                bear1:
+                    scoreAutomaticBearCluster(
+                        "bear1",
+                        playerCounts.bear1,
+                        remainingPoints,
+                        true
+                    ),
+                bear2:
+                    scoreAutomaticBearCluster(
+                        "bear2",
+                        playerCounts.bear2,
+                        remainingPoints,
+                        true
+                    )
+            };
+
+            if (
+                !isAutomaticCapacityPreserved(
+                    currentMetrics.bear1,
+                    nextMetrics.bear1
+                ) ||
+                !isAutomaticCapacityPreserved(
+                    currentMetrics.bear2,
+                    nextMetrics.bear2
+                )
+            ) {
+                continue;
+            }
+
+            const nextHoleCount =
+                countAutomaticTerritoryHoleCells(
+                    remainingPoints
+                );
+
+            if (
+                nextHoleCount >
+                currentHoleCount
+            ) {
+                continue;
+            }
+
+            flagPoints.splice(
+                candidateIndex,
+                1
+            );
+
+            currentMetrics = nextMetrics;
+            currentHoleCount = nextHoleCount;
+            removedInPass = true;
+            break;
+        }
+    }
+}
+
+
+function getAutomaticPruningCandidates(
+    flagPoints
+) {
+    const app = window.AllianceApp;
+
+    const firstTrap =
+        app.state.bearTraps.bear1;
+
+    const secondTrap =
+        app.state.bearTraps.bear2;
+
+    if (!firstTrap || !secondTrap) {
+        return flagPoints.slice();
+    }
+
+    const firstCenter = {
+        x: firstTrap.x + 1,
+        y: firstTrap.y + 1
+    };
+
+    const secondCenter = {
+        x: secondTrap.x + 1,
+        y: secondTrap.y + 1
+    };
+
+    const midpoint = {
+        x:
+            (firstCenter.x + secondCenter.x) /
+            2,
+        y:
+            (firstCenter.y + secondCenter.y) /
+            2
+    };
+
+    const minimumX =
+        Math.min(
+            firstCenter.x,
+            secondCenter.x
+        ) - 3;
+
+    const maximumX =
+        Math.max(
+            firstCenter.x,
+            secondCenter.x
+        ) + 3;
+
+    const minimumY =
+        Math.min(
+            firstCenter.y,
+            secondCenter.y
+        ) - 3;
+
+    const maximumY =
+        Math.max(
+            firstCenter.y,
+            secondCenter.y
+        ) + 3;
+
+    return flagPoints
+        .slice()
+        .sort(
+            function (first, second) {
+                const firstInCorridor =
+                    first.x >= minimumX &&
+                    first.x <= maximumX &&
+                    first.y >= minimumY &&
+                    first.y <= maximumY;
+
+                const secondInCorridor =
+                    second.x >= minimumX &&
+                    second.x <= maximumX &&
+                    second.y >= minimumY &&
+                    second.y <= maximumY;
+
+                if (
+                    firstInCorridor !==
+                    secondInCorridor
+                ) {
+                    return firstInCorridor
+                        ? -1
+                        : 1;
+                }
+
+                return (
+                    getChebyshevDistance(
+                        first,
+                        midpoint
+                    ) -
+                    getChebyshevDistance(
+                        second,
+                        midpoint
+                    )
+                );
+            }
+        );
+}
+
+
+function isAutomaticCapacityPreserved(
+    before,
+    after
+) {
+    return (
+        after.placedCount >=
+            before.placedCount &&
+        after.nearCount >=
+            before.nearCount &&
+        after.mediumCount >=
+            before.mediumCount &&
+        after.distanceTotal <=
+            before.distanceTotal + 0.0001
+    );
+}
+
+
+function areAutomaticFlagsConnected(
+    flagPoints
+) {
+    const app = window.AllianceApp;
+    const headquarters =
+        app.state.headquarters;
+
+    if (!headquarters) {
+        return false;
+    }
+
+    const headquartersCenter = {
+        x: headquarters.x + 1,
+        y: headquarters.y + 1
+    };
+
+    const headquartersRadius =
+        Math.floor(
+            (
+                app.settings.headquarters
+                    .territorySize || 15
+            ) / 2
+        );
+
+    const flagRadius =
+        Math.floor(
+            (
+                app.settings.flag
+                    .territorySize || 7
+            ) / 2
+        );
+
+    const connectedIndexes = new Set();
+    const pendingIndexes = [];
+
+    flagPoints.forEach(
+        function (point, index) {
+            if (
+                squareTerritoriesConnect(
+                    point.x,
+                    point.y,
+                    flagRadius,
+                    headquartersCenter.x,
+                    headquartersCenter.y,
+                    headquartersRadius
+                )
+            ) {
+                connectedIndexes.add(index);
+                pendingIndexes.push(index);
+            }
+        }
+    );
+
+    while (pendingIndexes.length > 0) {
+        const currentIndex =
+            pendingIndexes.shift();
+
+        const currentPoint =
+            flagPoints[currentIndex];
+
+        flagPoints.forEach(
+            function (candidate, index) {
+                if (
+                    connectedIndexes.has(index)
+                ) {
+                    return;
+                }
+
+                if (
+                    squareTerritoriesConnect(
+                        currentPoint.x,
+                        currentPoint.y,
+                        flagRadius,
+                        candidate.x,
+                        candidate.y,
+                        flagRadius
+                    )
+                ) {
+                    connectedIndexes.add(index);
+                    pendingIndexes.push(index);
+                }
+            }
+        );
+    }
+
+    return (
+        connectedIndexes.size ===
+        flagPoints.length
+    );
+}
+
+
+function countAutomaticTerritoryHoleCells(
+    flagPoints
+) {
+    const territoryCells =
+        createAutomaticTerritorySet(
+            flagPoints
+        );
+
+    const outsideCells = new Set();
+    const pendingCells = [];
+
+    function addOutsideCell(x, y) {
+        const key = `${x},${y}`;
+
+        if (
+            !isInsideGrid(x, y) ||
+            territoryCells.has(key) ||
+            outsideCells.has(key)
+        ) {
+            return;
+        }
+
+        outsideCells.add(key);
+        pendingCells.push({
+            x: x,
+            y: y
+        });
+    }
+
+    for (let index = 0; index < GRID_SIZE; index++) {
+        addOutsideCell(index, 0);
+        addOutsideCell(index, GRID_SIZE - 1);
+        addOutsideCell(0, index);
+        addOutsideCell(GRID_SIZE - 1, index);
+    }
+
+    while (pendingCells.length > 0) {
+        const current = pendingCells.shift();
+
+        addOutsideCell(current.x - 1, current.y);
+        addOutsideCell(current.x + 1, current.y);
+        addOutsideCell(current.x, current.y - 1);
+        addOutsideCell(current.x, current.y + 1);
+    }
+
+    let holeCellCount = 0;
+
+    for (let y = 0; y < GRID_SIZE; y++) {
+        for (let x = 0; x < GRID_SIZE; x++) {
+            const key = `${x},${y}`;
+
+            if (
+                !territoryCells.has(key) &&
+                !outsideCells.has(key)
+            ) {
+                holeCellCount++;
+            }
+        }
+    }
+
+    return holeCellCount;
 }
 
 function connectAutomaticClusterToHeadquarters(
@@ -2711,7 +3602,7 @@ function connectAutomaticClusterToHeadquarters(
         getChebyshevDistance(
             current,
             hqCenter
-        ) > 10 &&
+        ) > 11 &&
         guard < 30
     ) {
         guard++;
@@ -2723,7 +3614,7 @@ function connectAutomaticClusterToHeadquarters(
                     hqCenter.x - current.x
                 ) *
                 Math.min(
-                    6,
+                    7,
                     Math.abs(
                         hqCenter.x - current.x
                     )
@@ -2734,7 +3625,7 @@ function connectAutomaticClusterToHeadquarters(
                     hqCenter.y - current.y
                 ) *
                 Math.min(
-                    6,
+                    7,
                     Math.abs(
                         hqCenter.y - current.y
                     )
@@ -4745,6 +5636,13 @@ function renderMap() {
     renderPlayers();
     renderFlagPlacementHints();
     renderFlagConnections();
+
+    if (
+        typeof refreshPlacementCoordinateList ===
+        "function"
+    ) {
+        refreshPlacementCoordinateList();
+    }
 }
 
 function renderFixedBuildings() {

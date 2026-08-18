@@ -82,6 +82,13 @@ function saveGameCoordinateSettings() {
             `保存しました：#${kingdom} 本部 X${headquartersX} Y${headquartersY}`;
     }
 
+    if (
+        typeof refreshPlacementCoordinateList ===
+        "function"
+    ) {
+        refreshPlacementCoordinateList();
+    }
+
     return true;
 }
 

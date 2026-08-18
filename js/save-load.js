@@ -41,7 +41,9 @@ window.AllianceApp.createExportData = function () {
                         allianceRank:
                             player.allianceRank || "",
                         accountType:
-                            player.accountType || ""
+                            player.accountType || "",
+                        isTemporary:
+                            player.isTemporary === true
                     };
                 }
             ),
