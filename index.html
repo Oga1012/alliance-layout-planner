@@ -358,6 +358,51 @@
                 </div>
 
 
+                <div id="placement-coordinate-list">
+                    <div class="placement-coordinate-heading">
+                        <h3>ゲーム内配置リスト</h3>
+
+                        <button
+                            type="button"
+                            id="export-placement-csv"
+                        >
+                            CSV保存
+                        </button>
+
+                        <button
+                            type="button"
+                            id="export-layout-png"
+                        >
+                            PNG画像保存
+                        </button>
+                    </div>
+
+                    <p id="placement-coordinate-summary">
+                        本部を配置すると座標一覧を表示します。
+                    </p>
+
+                    <div class="placement-coordinate-table-wrap">
+                        <table class="placement-coordinate-table">
+                            <thead>
+                                <tr>
+                                    <th>種類</th>
+                                    <th>名前</th>
+                                    <th>X</th>
+                                    <th>Y</th>
+                                </tr>
+                            </thead>
+                            <tbody id="placement-coordinate-body">
+                                <tr>
+                                    <td colspan="4" class="placement-coordinate-empty">
+                                        配置データはまだありません。
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
                 <div class="layout-button-area">
 
                     <button
@@ -588,6 +633,72 @@
 
                 </div>
 
+                <div class="temporary-player-area">
+
+                    <div class="temporary-player-heading">
+                        <strong>仮プレイヤー</strong>
+                        <span>名簿が未確定でも配置を試せます</span>
+                    </div>
+
+                    <div class="temporary-player-controls">
+                        <label>
+                            <span>人数</span>
+                            <input
+                                type="number"
+                                id="temporary-player-count"
+                                min="1"
+                                max="200"
+                                value="10"
+                                inputmode="numeric"
+                            >
+                        </label>
+
+                        <label>
+                            <span>優先度</span>
+                            <select id="temporary-player-priority">
+                                <option value="">未設定</option>
+                                <option value="SS">SS</option>
+                                <option value="S">S</option>
+                                <option value="A" selected>A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            <span>希望</span>
+                            <select id="temporary-player-bear">
+                                <option value="bear1" selected>熊罠1</option>
+                                <option value="bear2">熊罠2</option>
+                                <option value="">未振分</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="temporary-player-actions">
+                        <button
+                            type="button"
+                            id="add-temporary-players"
+                        >
+                            仮プレイヤーを追加
+                        </button>
+
+                        <button
+                            type="button"
+                            id="delete-temporary-players"
+                            class="danger-button"
+                        >
+                            仮だけ削除
+                        </button>
+                    </div>
+
+                    <p id="temporary-player-message">
+                        名前は「仮01」から自動で付きます。
+                    </p>
+
+                </div>
+
                 <button
                     type="button"
                     id="auto-place-players"
@@ -743,19 +854,21 @@
 </main>
 
 
-<script src="js/state.js?v=20260806-coordinates"></script>
-<script src="js/map.js?v=20260810-auto-mode"></script>
+<script src="js/state.js?v=20260818-temporary-players"></script>
+<script src="js/map.js?v=20260818-prune-flags"></script>
 
 <script src="js/toolbar-ui.js"></script>
 <script src="js/collapse-ui.js?v=20260806-collapse"></script>
 <script src="js/bear-ui.js?v=20260810-auto-mode"></script>
-<script src="js/player-ui.js"></script>
+<script src="js/player-ui.js?v=20260818-temporary-players"></script>
 <script src="js/csv.js"></script>
 <script src="js/layout-ui.js"></script>
 <script src="js/coordinate-ui.js?v=20260806-coordinates"></script>
-<script src="js/save-load.js"></script>
+<script src="js/save-load.js?v=20260818-temporary-players"></script>
+<script src="js/placement-export.js?v=20260818-placement-focus"></script>
+<script src="js/export-image.js?v=20260818-png-export"></script>
 
-<script src="js/app.js?v=20260810-clear-map"></script>
+<script src="js/app.js?v=20260818-placement-focus"></script>
 
 </body>
 
