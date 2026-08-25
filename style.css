@@ -1266,3 +1266,278 @@ main {
     outline-offset: -3px;
     filter: brightness(1.2);
 }
+/* =======================================
+   初回準備ガイド
+======================================= */
+
+.help-button {
+    background: #0f766e;
+    border-color: #5eead4;
+}
+
+.help-button:hover {
+    background: #0d9488 !important;
+}
+
+body.setup-guide-open {
+    overflow: hidden;
+}
+
+.setup-guide-modal[hidden] {
+    display: none;
+}
+
+.setup-guide-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+}
+
+.setup-guide-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(3px);
+}
+
+.setup-guide-dialog {
+    position: relative;
+    z-index: 1;
+
+    width: min(760px, 100%);
+    max-height: min(88vh, 860px);
+    overflow: auto;
+
+    background: #f8fafc;
+    color: #1e293b;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.38);
+}
+
+.setup-guide-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+
+    padding: 22px 24px 18px;
+    background: linear-gradient(135deg, #0f766e, #2563eb);
+    color: white;
+}
+
+.setup-guide-kicker {
+    margin: 0 0 4px;
+    color: #ccfbf1;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+}
+
+.setup-guide-header h2 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.setup-guide-header p:last-child {
+    margin: 7px 0 0;
+    color: #e0f2fe;
+    font-size: 13px;
+}
+
+.setup-guide-close {
+    flex: 0 0 auto;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-color: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.2);
+    font-size: 25px;
+    line-height: 1;
+}
+
+.setup-guide-steps {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 20px 24px;
+    list-style: none;
+}
+
+.setup-guide-step {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 12px;
+
+    padding: 15px;
+    background: white;
+    border: 1px solid #dbe4ee;
+    border-radius: 12px;
+}
+
+.setup-guide-step.is-complete {
+    background: #f0fdf4;
+    border-color: #86efac;
+}
+
+.setup-guide-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-weight: 800;
+}
+
+.setup-guide-step.is-complete .setup-guide-number {
+    background: #22c55e;
+    color: white;
+}
+
+.setup-guide-step-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.setup-guide-step h3 {
+    margin: 2px 0 0;
+    font-size: 16px;
+}
+
+.setup-guide-step p {
+    margin: 7px 0 10px;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.setup-guide-status {
+    flex: 0 0 auto;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.setup-guide-step.is-complete .setup-guide-status {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.setup-guide-action {
+    padding: 6px 10px;
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+    color: #334155;
+    font-size: 12px;
+}
+
+.setup-guide-action:hover {
+    background: #cbd5e1 !important;
+}
+
+.setup-guide-footer {
+    position: sticky;
+    bottom: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    padding: 16px 24px;
+    background: #f8fafc;
+    border-top: 1px solid #dbe4ee;
+}
+
+.setup-guide-skip {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #475569;
+    font-size: 13px;
+}
+
+.setup-guide-primary {
+    padding: 9px 18px;
+    background: #2563eb;
+    border-color: #1d4ed8;
+    font-weight: 700;
+}
+
+.setup-guide-primary:hover {
+    background: #1d4ed8 !important;
+}
+
+@media (max-width: 600px) {
+    .setup-guide-modal {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .setup-guide-dialog {
+        width: 100%;
+        max-height: 92vh;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .setup-guide-header {
+        padding: 18px 16px 14px;
+    }
+
+    .setup-guide-header h2 {
+        font-size: 19px;
+    }
+
+    .setup-guide-steps {
+        padding: 14px 12px;
+    }
+
+    .setup-guide-step {
+        grid-template-columns: 32px minmax(0, 1fr);
+        gap: 9px;
+        padding: 12px;
+    }
+
+    .setup-guide-number {
+        width: 30px;
+        height: 30px;
+    }
+
+    .setup-guide-step-title-row {
+        display: block;
+    }
+
+    .setup-guide-status {
+        display: inline-block;
+        margin-top: 6px;
+    }
+
+    .setup-guide-footer {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 12px 16px 16px;
+    }
+
+    .setup-guide-primary {
+        width: 100%;
+    }
+}

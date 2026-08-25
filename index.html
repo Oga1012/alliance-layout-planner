@@ -11,7 +11,7 @@
 
     <title>Alliance Layout Planner</title>
 
-    <link rel="stylesheet" href="style.css?v=20260806-collapse">
+    <link rel="stylesheet" href="style.css?v=20260825-setup-guide">
 </head>
 
 <body>
@@ -166,6 +166,15 @@
                 disabled
             >
                 ↷ やり直す
+            </button>
+
+            <button
+                type="button"
+                id="open-setup-guide"
+                class="help-button"
+                title="レイアウト作成の手順を表示"
+            >
+                ？ 使い方
             </button>
 
             <button
@@ -854,6 +863,122 @@
 </main>
 
 
+<!-- 初回準備ガイド -->
+<div
+    id="setup-guide-modal"
+    class="setup-guide-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="setup-guide-title"
+    aria-hidden="true"
+    hidden
+>
+    <div class="setup-guide-backdrop" data-guide-close></div>
+
+    <div class="setup-guide-dialog">
+        <div class="setup-guide-header">
+            <div>
+                <p class="setup-guide-kicker">はじめに</p>
+                <h2 id="setup-guide-title">プレイヤーを配置するまでの準備</h2>
+                <p>上から順番に進めると、レイアウトを作成できます。</p>
+            </div>
+
+            <button
+                type="button"
+                id="close-setup-guide"
+                class="setup-guide-close"
+                aria-label="使い方ガイドを閉じる"
+            >
+                ×
+            </button>
+        </div>
+
+        <ol class="setup-guide-steps">
+            <li class="setup-guide-step" data-guide-step="bears">
+                <span class="setup-guide-number">1</span>
+                <div class="setup-guide-step-body">
+                    <div class="setup-guide-step-title-row">
+                        <h3>熊罠の時間を入力して設置</h3>
+                        <span class="setup-guide-status">未完了</span>
+                    </div>
+                    <p>熊罠1・熊罠2の開始時間を入力し、マップ上へ設置します。</p>
+                    <button type="button" class="setup-guide-action" data-guide-panel="bear-settings-content">
+                        熊罠設定を開く
+                    </button>
+                </div>
+            </li>
+
+            <li class="setup-guide-step" data-guide-step="headquarters">
+                <span class="setup-guide-number">2</span>
+                <div class="setup-guide-step-body">
+                    <div class="setup-guide-step-title-row">
+                        <h3>同盟本部を設置して座標を入力</h3>
+                        <span class="setup-guide-status">未完了</span>
+                    </div>
+                    <p>本部を手動で設置し、ゲーム内の王国・X・Y座標を入力します。</p>
+                    <button type="button" class="setup-guide-action" data-guide-panel="layout-panel-content" data-guide-tool="hq">
+                        本部・座標設定を開く
+                    </button>
+                </div>
+            </li>
+
+            <li class="setup-guide-step" data-guide-step="flags">
+                <span class="setup-guide-number">3</span>
+                <div class="setup-guide-step-body">
+                    <div class="setup-guide-step-title-row">
+                        <h3>本部と旗を自動配置（任意）</h3>
+                        <span class="setup-guide-status">未完了</span>
+                    </div>
+                    <p>熊罠に対する本部の方角を選び、本部＋旗または旗だけを自動配置できます。</p>
+                    <button type="button" class="setup-guide-action" data-guide-panel="bear-settings-content">
+                        自動配置設定を開く
+                    </button>
+                </div>
+            </li>
+
+            <li class="setup-guide-step" data-guide-step="player-data">
+                <span class="setup-guide-number">4</span>
+                <div class="setup-guide-step-body">
+                    <div class="setup-guide-step-title-row">
+                        <h3>プレイヤーデータを準備</h3>
+                        <span class="setup-guide-status">未完了</span>
+                    </div>
+                    <p>CSVを読み込むか、人数を指定して仮プレイヤーを作成します。</p>
+                    <button type="button" class="setup-guide-action" data-guide-panel="player-panel-content">
+                        プレイヤー管理を開く
+                    </button>
+                </div>
+            </li>
+
+            <li class="setup-guide-step" data-guide-step="player-placement">
+                <span class="setup-guide-number">5</span>
+                <div class="setup-guide-step-body">
+                    <div class="setup-guide-step-title-row">
+                        <h3>プレイヤーを配置</h3>
+                        <span class="setup-guide-status">未完了</span>
+                    </div>
+                    <p>ランク・戦力・希望時間をもとに、熊罠の近くへ自動配置します。</p>
+                    <button type="button" class="setup-guide-action" data-guide-panel="player-panel-content">
+                        配置画面を開く
+                    </button>
+                </div>
+            </li>
+        </ol>
+
+        <div class="setup-guide-footer">
+            <label class="setup-guide-skip">
+                <input type="checkbox" id="setup-guide-do-not-show">
+                次回から自動表示しない
+            </label>
+
+            <button type="button" id="start-setup-guide" class="setup-guide-primary">
+                準備を始める
+            </button>
+        </div>
+    </div>
+</div>
+
+
 <script src="js/state.js?v=20260818-temporary-players"></script>
 <script src="js/map.js?v=20260818-prune-flags"></script>
 
@@ -869,6 +994,7 @@
 <script src="js/export-image.js?v=20260818-png-export"></script>
 
 <script src="js/app.js?v=20260818-placement-focus"></script>
+<script src="js/onboarding-ui.js?v=20260825-setup-guide"></script>
 
 </body>
 
