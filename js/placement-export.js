@@ -290,9 +290,16 @@ function refreshPlacementCoordinateList() {
             row.name,
             row.x,
             row.y
-        ].forEach(function (value) {
+        ].forEach(function (value, columnIndex) {
             const cell =
                 document.createElement("td");
+
+            if (
+                row.category === "プレイヤー" &&
+                columnIndex === 1
+            ) {
+                cell.classList.add("i18n-skip");
+            }
 
             cell.textContent =
                 String(value);
