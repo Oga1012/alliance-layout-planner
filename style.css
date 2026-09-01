@@ -36,6 +36,35 @@ header {
     gap: 20px;
 }
 
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.language-switcher {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 8px;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    background: #111827;
+    color: #cbd5e1;
+    font-size: 12px;
+}
+
+.language-switcher select {
+    min-width: 112px;
+    padding: 5px 28px 5px 8px;
+    border: 1px solid #64748b;
+    border-radius: 5px;
+    background: #f8fafc;
+    color: #0f172a;
+    cursor: pointer;
+    font-size: 13px;
+}
+
 h1 {
     font-size: 21px;
     margin-bottom: 2px;
@@ -303,9 +332,19 @@ button:disabled {
 }
 
 @media (max-width: 700px) {
+    .header-controls {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .language-switcher {
+        flex: 1 1 auto;
+        justify-content: space-between;
+    }
+
     #status {
         min-width: 0;
-        width: 100%;
+        flex: 1 1 220px;
         font-size: 12px;
     }
 
